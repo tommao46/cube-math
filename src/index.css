@@ -73,8 +73,27 @@ ul, ol { list-style: none; }
 
 /* ==================== Hero ==================== */
 .hero {
-  padding: 5rem 1.5rem 4rem; text-align: center;
+  padding: 4rem 1.5rem 3rem;
   background: linear-gradient(180deg, var(--accent-l) 0%, var(--bg) 100%);
+}
+.hero-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+.hero-text {
+  flex: 1;
+  text-align: left;
+}
+.hero-text h1 { max-width: 100%; margin-left: 0; margin-right: 0; }
+.hero-text p.sub { max-width: 100%; margin: 0 0 2rem 0; }
+.hero-visual {
+  flex: 0 0 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .hero-badge {
   display: inline-block;
@@ -83,15 +102,22 @@ ul, ol { list-style: none; }
   padding: 0.35rem 0.9rem; border-radius: 20px;
   margin-bottom: 1.5rem; letter-spacing: 0.5px;
 }
-.hero h1 {
+.hero-text h1 {
   font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800;
   letter-spacing: -0.3px; margin-bottom: 0.75rem;
-  line-height: 1.25; max-width: 640px; margin-left: auto; margin-right: auto;
+  line-height: 1.25;
 }
-.hero h1 em { font-style: normal; color: var(--accent); }
-.hero p.sub {
+.hero-text h1 em { font-style: normal; color: var(--accent); }
+.hero-text p.sub {
   color: var(--ink2); font-size: 1rem;
-  max-width: 520px; margin: 0 auto 2rem; line-height: 1.6;
+  line-height: 1.6;
+}
+@media (max-width: 768px) {
+  .hero-inner { flex-direction: column; text-align: center; }
+  .hero-text { text-align: center; }
+  .hero-text h1, .hero-text p.sub { margin-left: auto; margin-right: auto; }
+  .hero-visual { flex: none; width: 100%; }
+  .hero-text .btn-row { justify-content: center; }
 }
 
 /* ==================== 按钮 ==================== */

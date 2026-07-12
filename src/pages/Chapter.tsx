@@ -912,8 +912,9 @@ export default function Chapter() {
                   <div style={{ fontSize: '0.72rem', color: 'var(--ink2)', marginBottom: '0.8rem', lineHeight: 1.6 }}>
                     <div style={{ marginBottom: '0.15rem' }}>✅ 白色十字（直觉操作）</div>
                     <div style={{ marginBottom: '0.15rem' }}>✅ 白色角块 — 逆序列法则（R' D' R D）</div>
-                    <div style={{ marginBottom: '0.15rem', fontWeight: 600 }}>▶ 中层棱块 — 共轭变换（U R U' R' U' F' U F）</div>
-                    <div style={{ color: 'var(--muted)' }}>⬜ 顶面十字 / 棱归位 / 角归位 / 翻黄角</div>
+                    <div style={{ marginBottom: '0.15rem' }}>✅ 中层棱块 — 共轭变换（U R U' R' U' F' U F）</div>
+                    <div style={{ marginBottom: '0.15rem' }}>✅ 黄色十字 — 交换子（F R U R' U' F'）</div>
+                    <div style={{ color: 'var(--muted)' }}>⬜ 黄面角位 / 归位 / 翻角</div>
                   </div>
                   <button
                     className="btn btn-primary"

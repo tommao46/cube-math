@@ -21,6 +21,9 @@ type Phase =
   | 'edge-intro'     /* 步骤3：中层棱块 — 介绍 */
   | 'edge-guided'    /* 步骤3：中层棱块 — 引导演示 */
   | 'edge-practice'  /* 步骤3：中层棱块 — 实操 */
+  | 'topcross-intro'    /* 步骤4：黄色十字 — 介绍 */
+  | 'topcross-guided'   /* 步骤4：黄色十字 — 引导演示 */
+  | 'topcross-practice' /* 步骤4：黄色十字 — 实操 */
   | 'done'           /* 全部完成 */
 
 /* ---- 白色角块常量（步骤2） ---- */
@@ -86,6 +89,35 @@ const EDGE_GUIDED_STEPS = [
   { notation: 'F', text: '关闭前面，棱块完全归位' },
 ]
 
+/* ---- 黄色十字常量（步骤4） ---- */
+
+/** 初始打乱：随机4步制造顶面棱块错乱 */
+const TOPCROSS_INITIAL_MOVES: Move[] = [
+  { axis: 'z', layer: 1, direction: 1 },   // F
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+]
+
+/** 顶面十字公式：F R U R' U' F' */
+const TOPCROSS_SOLUTION_MOVES: Move[] = [
+  { axis: 'z', layer: 1, direction: 1 },   // F
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'z', layer: 1, direction: -1 },  // F'
+]
+
+const TOPCROSS_GUIDED_STEPS = [
+  { notation: 'F', text: 'F：前面顺时针 — 交换子开启，"推"到前面' },
+  { notation: 'R', text: 'R：右面顺时针 — 核心操作，翻转顶层棱块朝向' },
+  { notation: 'U', text: 'U：上面顺时针 — 移动目标棱块位置' },
+  { notation: "R'", text: "R'：右面逆时针 — 开始搬回来" },
+  { notation: "U'", text: "U'：上面逆时针 — 继续搬回来" },
+  { notation: "F'", text: "F'：交换子完成 — 观察顶层黄色棱块朝向" },
+]
+
 /* ---- 工具函数 ---- */
 
 /** Move → 记法文本 */
@@ -101,12 +133,14 @@ function moveToNotation(m: Move): string {
 
 /** 获取当前阶段的元信息 */
 function getTaskInfo(phase: Phase): { step: number; total: number; name: string } {
-  if (phase === 'cross') return { step: 1, total: 3, name: '白色十字' }
+  if (phase === 'cross') return { step: 1, total: 4, name: '白色十字' }
   const isCorner = phase === 'corner-intro' || phase === 'corner-guided' || phase === 'corner-practice' || phase === 'corner-done'
-  if (isCorner) return { step: 2, total: 3, name: '白色角块' }
+  if (isCorner) return { step: 2, total: 4, name: '白色角块' }
   const isEdge = phase === 'edge-intro' || phase === 'edge-guided' || phase === 'edge-practice'
-  if (isEdge) return { step: 3, total: 3, name: '中层棱块' }
-  return { step: 3, total: 3, name: '全部完成' }
+  if (isEdge) return { step: 3, total: 4, name: '中层棱块' }
+  const isTopcross = phase === 'topcross-intro' || phase === 'topcross-guided' || phase === 'topcross-practice'
+  if (isTopcross) return { step: 4, total: 4, name: '黄色十字' }
+  return { step: 4, total: 4, name: '全部完成' }
 }
 
 /** 判断当前阶段是否属于角块步骤 */
@@ -117,6 +151,11 @@ function isCornerPhase(phase: Phase): boolean {
 /** 判断当前阶段是否属于棱块步骤 */
 function isEdgePhase(phase: Phase): boolean {
   return phase === 'edge-intro' || phase === 'edge-guided' || phase === 'edge-practice'
+}
+
+/** 判断当前阶段是否属于顶面十字步骤 */
+function isTopcrossPhase(phase: Phase): boolean {
+  return phase === 'topcross-intro' || phase === 'topcross-guided' || phase === 'topcross-practice'
 }
 
 /* ==================================================================== */
@@ -160,6 +199,8 @@ export default function Tutorial() {
       initMoves = CORNER_INITIAL_MOVES
     } else if (isEdgePhase(phase)) {
       initMoves = EDGE_INITIAL_MOVES
+    } else if (isTopcrossPhase(phase)) {
+      initMoves = TOPCROSS_INITIAL_MOVES
     }
     if (!initMoves || !cubeRef.current) return
 
@@ -179,10 +220,10 @@ export default function Tutorial() {
     }
 
     /* 动画结束后，根据子阶段决定下一步 */
-    if (phase === 'corner-guided' || phase === 'edge-guided') {
+    if (phase === 'corner-guided' || phase === 'edge-guided' || phase === 'topcross-guided') {
       // 引导模式：启动逐步演示
       setTimeout(() => setGuidedIdx(0), d + 300)
-    } else if (phase === 'corner-practice' || phase === 'edge-practice') {
+    } else if (phase === 'corner-practice' || phase === 'edge-practice' || phase === 'topcross-practice') {
       // 实操模式：标记为可操作
       setTimeout(() => setReady(true), d)
     }
@@ -194,6 +235,7 @@ export default function Tutorial() {
     let moves: Move[] | null = null
     if (phase === 'corner-guided') moves = CORNER_SOLUTION_MOVES
     else if (phase === 'edge-guided') moves = EDGE_SOLUTION_MOVES
+    else if (phase === 'topcross-guided') moves = TOPCROSS_SOLUTION_MOVES
     if (!moves || guidedIdx < 0 || guidedIdx >= moves.length) return
 
     const t = setTimeout(() => {
@@ -205,10 +247,11 @@ export default function Tutorial() {
   /* ===== 监听用户实操：检测魔方是否还原 ===== */
   useEffect(() => {
     if (!ready || taskDone) return
-    if (phase !== 'corner-practice' && phase !== 'edge-practice') return
+    if (phase !== 'corner-practice' && phase !== 'edge-practice' && phase !== 'topcross-practice') return
 
     const initMoves = phase === 'corner-practice'
-      ? CORNER_INITIAL_MOVES : EDGE_INITIAL_MOVES
+      ? CORNER_INITIAL_MOVES : phase === 'edge-practice'
+      ? EDGE_INITIAL_MOVES : TOPCROSS_INITIAL_MOVES
     const offset = initMoves.length
     const newMoves = storeHistory.slice(offset)
     setUserNotations(newMoves.map(moveToNotation))
@@ -217,8 +260,8 @@ export default function Tutorial() {
     if (newMoves.length > 0 && isSolved(storeCubies)) {
       setTaskDone(true)
       setStarVisible(true)
-      // 角块完成 → corner-done，棱块完成 → done（全部完成）
-      setTimeout(() => setPhase(phase === 'corner-practice' ? 'corner-done' : 'done'), 600)
+      // 角块完成 → corner-done，棱块完成 → topcross-intro，十字完成 → done
+      setTimeout(() => setPhase(phase === 'corner-practice' ? 'corner-done' : phase === 'edge-practice' ? 'topcross-intro' : 'done'), 600)
     }
   }, [storeCubies, storeHistory, phase, taskDone, ready])
 
@@ -245,8 +288,8 @@ export default function Tutorial() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           {/* 步骤指示器 */}
-          {[1, 2, 3].map((n) => (
-            <div key={n} title={['白色十字', '白色角块', '中层棱块'][n - 1]} style={{
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} title={['白色十字', '白色角块', '中层棱块', '黄色十字'][n - 1]} style={{
               width: '10px', height: '10px', borderRadius: '50%',
               background: n <= taskInfo.step ? 'var(--accent)' : 'var(--rule)',
               transition: 'background 0.3s ease',
@@ -280,7 +323,7 @@ export default function Tutorial() {
                   { k: 'practice', label: '实操' },
                   { k: 'done', label: '完成' },
                 ] as const).map((s) => {
-                  const active = phase === `corner-${s.k}` || phase === `edge-${s.k}`
+                  const active = phase === `corner-${s.k}` || phase === `edge-${s.k}` || phase === `topcross-${s.k}`
                   return (
                     <span key={s.k} style={{
                       padding: '0.15rem 0.6rem', borderRadius: '999px',
@@ -597,6 +640,125 @@ export default function Tutorial() {
             )}
 
             {/* ================================================================ */}
+            {/* 黄色十字 — 介绍 */}
+            {/* ================================================================ */}
+            {phase === 'topcross-intro' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  现在底层和中层已完成，只剩黄色面（顶层）。
+                  黄色十字是一次"翻转"操作的核心：用<strong>交换子 F R U R' U' F'</strong> 翻转顶层棱块朝向。
+                </p>
+                <div style={{
+                  padding: '0.6rem 1rem', marginBottom: '1rem',
+                  background: '#FEF3C7', borderRadius: '8px',
+                  fontFamily: 'monospace', fontSize: '0.85rem',
+                  textAlign: 'center', color: '#B45309',
+                }}>
+                  F R U R' U' F'
+                </div>
+                <ul style={{ fontSize: '0.82rem', color: 'var(--ink)', paddingLeft: '1.2rem', marginBottom: '1rem' }}>
+                  <li style={{ marginBottom: '0.3rem' }}>这是<strong>交换子</strong>的经典结构：F·R·U·R'·U'·F'</li>
+                  <li style={{ marginBottom: '0.3rem' }}>前半段 F·R·U·R'·U' = 打开操作空间</li>
+                  <li style={{ marginBottom: '0.3rem' }}>后半段 F' = 关闭回来，只改变顶层棱块朝向</li>
+                  <li>交换子的核心思想：<strong>打开→操作→关上</strong></li>
+                </ul>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-primary" onClick={() => setPhase('topcross-guided')}>
+                    看引导演示
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setPhase('topcross-practice')}>
+                    直接实操
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* 黄色十字 — 引导 */}
+            {phase === 'topcross-guided' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  观察黄色十字交换子的逐步动画：
+                </p>
+                {/* 步骤指示条 */}
+                <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.8rem', flexWrap: 'wrap' }}>
+                  {TOPCROSS_GUIDED_STEPS.map((s, i) => (
+                    <div key={i} style={{
+                      padding: '0.2rem 0.5rem', borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      background: i === guidedIdx ? '#FEF3C7' : (guidedIdx > i ? '#DCFCE7' : 'var(--bg2)'),
+                      borderLeft: '3px solid ' + (i === guidedIdx ? '#F59E0B' : 'transparent'),
+                      transition: 'all 0.3s ease',
+                    }}>
+                      <strong style={{ fontFamily: 'monospace' }}>{s.notation}</strong>
+                    </div>
+                  ))}
+                </div>
+                {TOPCROSS_GUIDED_STEPS.map((s, i) => (
+                  <p key={i} style={{
+                    fontSize: '0.78rem', color: i === guidedIdx ? 'var(--ink)' : 'var(--muted)',
+                    fontWeight: i === guidedIdx ? 600 : 400,
+                    marginBottom: i < TOPCROSS_GUIDED_STEPS.length - 1 ? '0.2rem' : '0.8rem',
+                  }}>
+                    {i + 1}. {s.text}
+                  </p>
+                ))}
+                {guidedIdx >= TOPCROSS_GUIDED_STEPS.length - 1 && (
+                  <>
+                    <div style={{
+                      padding: '0.5rem 0.8rem', borderRadius: '6px',
+                      background: '#DCFCE7', fontSize: '0.82rem', marginBottom: '0.6rem',
+                    }}>
+                      <span style={{ fontWeight: 700, color: '#16A34A' }}>交换子完成</span>
+                      <span style={{ color: 'var(--ink2)', marginLeft: '0.4rem' }}>
+                        黄色十字出现。这就是 F R U R' U' F' 的威力。
+                      </span>
+                    </div>
+                    <button className="btn btn-primary" onClick={() => setPhase('topcross-practice')}>
+                      亲自试试 →
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* 黄色十字 — 实操 */}
+            {phase === 'topcross-practice' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  魔方已回到初始状态。请执行以下交换子：
+                </p>
+                <div style={{
+                  padding: '0.6rem 1rem', marginBottom: '1rem',
+                  background: '#FEF3C7', borderRadius: '8px',
+                  fontFamily: 'monospace', fontSize: '0.9rem', fontWeight: 700,
+                  textAlign: 'center', color: '#B45309',
+                }}>
+                  {TOPCROSS_SOLUTION_MOVES.map(moveToNotation).join(' → ')}
+                </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
+                    你已执行：
+                  </p>
+                  <div style={{
+                    padding: '0.4rem 0.8rem', borderRadius: '6px',
+                    background: 'var(--bg2)', fontFamily: 'monospace',
+                    fontSize: '0.82rem',
+                    color: userNotations.length > 0 ? 'var(--accent)' : 'var(--muted)',
+                  }}>
+                    {userNotations.length > 0 ? userNotations.join(' → ') : '等待操作…'}
+                  </div>
+                </div>
+                <button
+                  className="btn btn-outline"
+                  style={{ width: '100%' }}
+                  onClick={() => setRetryKey((k) => k + 1)}
+                >
+                  重置重试
+                </button>
+              </>
+            )}
+
+            {/* ================================================================ */}
             {/* 全部完成 */}
             {/* ================================================================ */}
             {phase === 'done' && (
@@ -610,11 +772,11 @@ export default function Tutorial() {
                   </div>
                 )}
                 <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.5rem' }}>
-                  你成功完成了三步骤：白色十字 → 白色角块（逆序列法则） → 中层棱块（组合操作/共轭变换）。
+                  你成功完成了四步骤：白色十字 → 白色角块（逆序列法则） → 中层棱块（共轭变换） → 黄色十字（交换子）。
                 </p>
                 <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '1rem' }}>
-                  <strong>你已经亲身体验了线代两大核心工具的实战应用</strong>，
-                  剩余步骤（黄色面、顶层棱角归位）将在后续版本中使用更多群论工具继续指导。
+                  <strong>你已经亲身体验了线代三大核心工具的实战应用</strong>，
+                  剩余步骤（黄色顶面角块归位、顶层棱角归位）将在后续版本中使用更多群论工具继续指导。
                 </p>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <Link to="/chapter/solve" className="btn btn-outline" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
