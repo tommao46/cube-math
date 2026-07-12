@@ -471,6 +471,50 @@ export default function Tutorial() {
         </div>
       </div>
 
+      {/* 步骤快捷跳转栏 */}
+      <div style={{
+        display: 'flex', gap: '0.3rem', justifyContent: 'center',
+        padding: '0.6rem 1.5rem', flexWrap: 'wrap',
+        borderBottom: '1px solid var(--rule)', background: '#FAFBFC',
+      }}>
+        {[
+          { n: 1, label: '十字', phase: 'cross' as Phase },
+          { n: 2, label: '角块', phase: 'corner-intro' as Phase },
+          { n: 3, label: '棱块', phase: 'edge-intro' as Phase },
+          { n: 4, label: '黄十字', phase: 'topcross-intro' as Phase },
+          { n: 5, label: '棱归位', phase: 'edgeloc-intro' as Phase },
+          { n: 6, label: '角归位', phase: 'cornerloc-intro' as Phase },
+          { n: 7, label: '翻黄角', phase: 'orient-intro' as Phase },
+        ].map(({ n, label, phase: targetPhase }) => {
+          const active = taskInfo.step === n
+          const done = taskInfo.step > n
+          return (
+            <button
+              key={n}
+              onClick={() => { setPhase(targetPhase); setStarVisible(false) }}
+              title={`步骤${n}：${['白色十字','白色角块','中层棱块','黄色十字','棱块归位','角块归位','翻黄角'][n-1]}`}
+              style={{
+                padding: '0.3rem 0.7rem', borderRadius: '8px',
+                fontSize: '0.72rem', fontWeight: active ? 700 : 500,
+                cursor: 'pointer', border: 'none',
+                background: active ? 'var(--accent)' : done ? '#DCFCE7' : '#fff',
+                color: active ? '#fff' : done ? '#16A34A' : 'var(--ink2)',
+                boxShadow: active ? '0 2px 8px rgba(37,99,235,0.25)' : done ? 'inset 0 0 0 1px #BBF7D0' : 'inset 0 0 0 1px #E2E8F0',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                if (!active) (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+              onMouseLeave={(e) => {
+                if (!active) (e.currentTarget as HTMLElement).style.boxShadow = done ? 'inset 0 0 0 1px #BBF7D0' : 'inset 0 0 0 1px #E2E8F0'
+              }}
+            >
+              {done ? '✓' : n}. {label}
+            </button>
+          )
+        })}
+      </div>
+
       {/* 双栏布局 */}
       <div style={{
         display: 'flex', gap: '1.5rem', padding: '1.5rem',
