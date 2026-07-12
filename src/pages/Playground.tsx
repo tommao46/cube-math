@@ -461,8 +461,8 @@ export default function Playground() {
               </span>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 1.5rem', marginTop: '0.4rem' }}>
                 <div>方向键 ↑↓←→ / RLUDFB</div><div>顺时针旋转</div>
-                <div>Shift + 上述按键</div><div>逆时针旋转</div>
                 <div>W / S</div><div>前面(F) / 后面(B)</div>
+                <div>Shift + 上述按键</div><div>逆时针旋转</div>
                 <div>Ctrl + Z</div><div>撤销</div>
                 <div>Space</div><div>打乱</div>
                 <div>Esc</div><div>重置</div>
