@@ -872,7 +872,7 @@ export default function Tutorial() {
                     {i + 1}. {s.text}
                   </p>
                 ))}
-                {guidedIdx >= TOPCROSS_GUIDED_STEPS.length - 1 && (
+                {guidedIdx >= TOPCROSS_GUIDED_STEPS.length - 1 ? (
                   <>
                     <div style={{
                       padding: '0.5rem 0.8rem', borderRadius: '6px',
@@ -887,6 +887,18 @@ export default function Tutorial() {
                       亲自试试 →
                     </button>
                   </>
+                ) : (
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => setGuidedIdx((p) => p + 1)}
+                    >
+                      {guidedIdx === -1 ? '开始演示' : '下一步 →'}
+                    </button>
+                    <button className="btn btn-outline" onClick={() => setPhase('topcross-practice')}>
+                      跳过引导
+                    </button>
+                  </div>
                 )}
               </>
             )}
@@ -986,7 +998,7 @@ export default function Tutorial() {
                     marginBottom: '0.2rem',
                   }}>{i + 1}. {s.text}</p>
                 ))}
-                {guidedIdx >= EDGELOC_GUIDED_STEPS.length - 1 && (
+                {guidedIdx >= EDGELOC_GUIDED_STEPS.length - 1 ? (
                   <>
                     <div style={{
                       padding: '0.5rem 0.8rem', borderRadius: '6px',
@@ -998,6 +1010,15 @@ export default function Tutorial() {
                       亲自试试 →
                     </button>
                   </>
+                ) : (
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button className="btn btn-outline" onClick={() => setGuidedIdx((p) => p + 1)}>
+                      {guidedIdx === -1 ? '开始演示' : '下一步 →'}
+                    </button>
+                    <button className="btn btn-outline" onClick={() => setPhase('edgeloc-practice')}>
+                      跳过引导
+                    </button>
+                  </div>
                 )}
               </>
             )}
@@ -1091,7 +1112,7 @@ export default function Tutorial() {
                     marginBottom: '0.2rem',
                   }}>{i + 1}. {s.text}</p>
                 ))}
-                {guidedIdx >= CORNERLOC_GUIDED_STEPS.length - 1 && (
+                {guidedIdx >= CORNERLOC_GUIDED_STEPS.length - 1 ? (
                   <>
                     <div style={{
                       padding: '0.5rem 0.8rem', borderRadius: '6px',
@@ -1103,6 +1124,15 @@ export default function Tutorial() {
                       亲自试试 →
                     </button>
                   </>
+                ) : (
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button className="btn btn-outline" onClick={() => setGuidedIdx((p) => p + 1)}>
+                      {guidedIdx === -1 ? '开始演示' : '下一步 →'}
+                    </button>
+                    <button className="btn btn-outline" onClick={() => setPhase('cornerloc-practice')}>
+                      跳过引导
+                    </button>
+                  </div>
                 )}
               </>
             )}
@@ -1196,7 +1226,7 @@ export default function Tutorial() {
                     marginBottom: '0.2rem',
                   }}>{i + 1}. {s.text}</p>
                 ))}
-                {guidedIdx >= ORIENT_GUIDED_STEPS.length - 1 && (
+                {guidedIdx >= ORIENT_GUIDED_STEPS.length - 1 ? (
                   <>
                     <div style={{
                       padding: '0.5rem 0.8rem', borderRadius: '6px',
@@ -1208,6 +1238,15 @@ export default function Tutorial() {
                       亲自试试 →
                     </button>
                   </>
+                ) : (
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button className="btn btn-outline" onClick={() => setGuidedIdx((p) => p + 1)}>
+                      {guidedIdx === -1 ? '开始演示' : '下一步 →'}
+                    </button>
+                    <button className="btn btn-outline" onClick={() => setPhase('orient-practice')}>
+                      跳过引导
+                    </button>
+                  </div>
                 )}
               </>
             )}
