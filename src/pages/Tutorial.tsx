@@ -213,7 +213,7 @@ export default function Tutorial() {
     setGuidedIdx(-1)
 
     /* 播放初始打乱动画 */
-    let d = 200
+    let d = 400
     for (const m of initMoves) {
       setTimeout(() => cubeRef.current?.executeMove(moveToNotation(m)), d)
       d += 350
@@ -240,7 +240,7 @@ export default function Tutorial() {
 
     const t = setTimeout(() => {
       cubeRef.current?.executeMove(moveToNotation(moves![guidedIdx]))
-    }, 500)
+    }, 1000)
     return () => clearTimeout(t)
   }, [guidedIdx, phase])
 
@@ -288,13 +288,23 @@ export default function Tutorial() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           {/* 步骤指示器 */}
-          {[1, 2, 3, 4].map((n) => (
-            <div key={n} title={['白色十字', '白色角块', '中层棱块', '黄色十字'][n - 1]} style={{
-              width: '10px', height: '10px', borderRadius: '50%',
-              background: n <= taskInfo.step ? 'var(--accent)' : 'var(--rule)',
-              transition: 'background 0.3s ease',
-            }} />
-          ))}
+          {[1, 2, 3, 4].map((n) => {
+            const isCurrent = n === taskInfo.step
+            const isDone = n < taskInfo.step
+            return (
+              <div key={n} title={['白色十字', '白色角块', '中层棱块', '黄色十字'][n - 1]} style={{
+                width: isCurrent ? '12px' : '10px',
+                height: isCurrent ? '12px' : '10px',
+                borderRadius: '50%',
+                background: isDone ? '#10B981' : isCurrent ? 'var(--accent)' : 'var(--rule)',
+                border: isCurrent ? '2px solid var(--accent)' : isDone ? '2px solid #10B981' : '2px solid var(--rule)',
+                transition: 'all 0.3s ease',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {isDone && <span style={{ fontSize: '7px', color: '#fff', fontWeight: 700 }}>✓</span>}
+              </div>
+            )
+          })}
           <span style={{ fontSize: '0.75rem', color: 'var(--muted)', marginLeft: '0.3rem' }}>
             步骤 {taskInfo.step}/{taskInfo.total}
           </span>
@@ -799,12 +809,6 @@ export default function Tutorial() {
           }}>
             <Cube3DView ref={cubeRef} />
           </div>
-          <p style={{
-            marginTop: '0.4rem', fontSize: '0.72rem', color: 'var(--muted)',
-            textAlign: 'center',
-          }}>
-            左键点击面 = 逆时针 | 右键点击面 = 顺时针 | 空白拖拽 = 旋转视角
-          </p>
         </div>
       </div>
     </div>

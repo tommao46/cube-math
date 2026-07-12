@@ -25,19 +25,27 @@ export default function Landing() {
   const cubeRef = useRef<Cube3DViewHandle>(null)
   const [stepIndex, setStepIndex] = useState(-1)
 
-  /* 自动播放循环：打乱 → 还原 */
+  /* 自动播放循环：打乱 → 还原 → 暂停展示 → 重新开始 */
   useEffect(() => {
     const allMoves = [...SCRAMBLE_MOVES, ...SOLVE_MOVES]
     let i = 0
+    let done = false
+
     const timer = setInterval(() => {
       if (cubeRef.current && i < allMoves.length) {
         cubeRef.current.executeMove(allMoves[i])
         setStepIndex(i)
         i++
-      } else {
-        cubeRef.current?.reset()
-        setStepIndex(-1)
-        i = 0
+      } else if (!done) {
+        // 还原完成：暂停 3 秒展示成果
+        done = true
+        setStepIndex(allMoves.length) // 特殊值表示"还原完成"
+        setTimeout(() => {
+          cubeRef.current?.reset()
+          setStepIndex(-1)
+          i = 0
+          done = false
+        }, 3000)
       }
     }, 800)
     return () => clearInterval(timer)
@@ -68,7 +76,18 @@ export default function Landing() {
               <Cube3DView ref={cubeRef} disableStore />
             </div>
             <div className="hero-label">
-              {stepIndex >= 0 && (
+              {stepIndex === SCRAMBLE_MOVES.length + SOLVE_MOVES.length ? (
+                // 还原完成：绿色醒目提示
+                <div
+                  className="hero-label-inner"
+                  style={{
+                    background: '#DCFCE7',
+                    borderLeftColor: '#16A34A',
+                  }}
+                >
+                  ✅ 还原完成！每一步都有数学解释
+                </div>
+              ) : stepIndex >= 0 ? (
                 <div
                   className="hero-label-inner"
                   style={{
@@ -80,7 +99,7 @@ export default function Landing() {
                     ? `打乱中… ${SCRAMBLE_MOVES[stepIndex]}`
                     : solveLabels[stepIndex - SCRAMBLE_MOVES.length]?.text ?? '…'}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

@@ -343,17 +343,24 @@ export default function Playground() {
                   </h3>
                   {(() => {
                     const last = moveHistory[moveHistory.length - 1]
+                    const faceMap: Record<string, Record<number, string>> = {
+                      x: { 1: 'R', [-1]: 'L' },
+                      y: { 1: 'U', [-1]: 'D' },
+                      z: { 1: 'F', [-1]: 'B' },
+                    }
+                    const face = faceMap[last.axis]?.[last.layer] ?? last.axis.toUpperCase()
+                    const notation = last.direction === 1 ? face : face + "'"
                     const matrixMap: Record<string, number[][]> = {
                       R: [[1,0,0],[0,0,-1],[0,1,0]], L: [[1,0,0],[0,0,1],[0,-1,0]],
                       U: [[0,0,-1],[0,1,0],[1,0,0]], D: [[0,0,1],[0,1,0],[-1,0,0]],
                       F: [[0,1,0],[1,0,0],[0,0,1]], B: [[0,-1,0],[-1,0,0],[0,0,1]],
                     }
-                    const mat = matrixMap[last.notation.replace("'", '')] || [[1,0,0],[0,1,0],[0,0,1]]
-                    const isInverse = last.notation.includes("'")
+                    const mat = matrixMap[face] || [[1,0,0],[0,1,0],[0,0,1]]
+                    const isInverse = notation.includes("'")
                     return (
                       <div>
                         <p style={{ fontSize: '0.8rem', color: 'var(--ink2)', marginBottom: '0.5rem' }}>
-                          最后一步 <strong style={{ fontFamily: 'monospace' }}>{last.notation}</strong>
+                          最后一步 <strong style={{ fontFamily: 'monospace' }}>{notation}</strong>
                           {isInverse ? '（逆时针）= 矩阵的逆' : '（顺时针）'}
                         </p>
                         <div style={{
@@ -368,7 +375,7 @@ export default function Playground() {
                         <p style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                           {isInverse
                             ? '逆时针 = 顺时针矩阵的转置（正交矩阵性质：R⁻¹ = Rᵀ）'
-                            : '这个矩阵将右层方块绕 X 轴旋转 90°'}
+                            : '这个矩阵将方块绕对应轴旋转 90°'}
                         </p>
                       </div>
                     )
