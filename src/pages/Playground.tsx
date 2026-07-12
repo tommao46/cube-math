@@ -133,6 +133,42 @@ export default function Playground() {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
   }
 
+  /* ---- 键盘快捷键 ---- */
+  /** 按键 → 标准记法映射（Shift = 逆时针）
+   *  RLUDFB 是国际标准魔方记法，取自英文首字母：
+   *  R=Right, L=Left, U=Up, D=Down, F=Front, B=Back */
+  const KEY_MAP: Record<string, Record<string, string>> = {
+    normal: {
+      ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R',
+      KeyW: 'F', KeyS: 'B',        // W/S = Front/Back（WASD 游戏）
+      KeyR: 'R', KeyL: 'L', KeyU: 'U', KeyD: 'D', KeyF: 'F', KeyB: 'B',
+    },
+    shift: {
+      ArrowUp: "U'", ArrowDown: "D'", ArrowLeft: "L'", ArrowRight: "R'",
+      KeyW: "F'", KeyS: "B'",
+      KeyR: "R'", KeyL: "L'", KeyU: "U'", KeyD: "D'", KeyF: "F'", KeyB: "B'",
+    },
+  }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ctrl+Z = 撤销，Space = 打乱，Escape = 重置
+      if (e.ctrlKey && e.key === 'z') { e.preventDefault(); handleUndo(); return }
+      if (e.key === ' ') { e.preventDefault(); handleScramble(); return }
+      if (e.key === 'Escape') { handleReset(); return }
+
+      // 方向键/字母键 → 魔方操作
+      const map = e.shiftKey ? KEY_MAP.shift : KEY_MAP.normal
+      const notation = map[e.code]
+      if (notation && cubeRef.current) {
+        e.preventDefault()
+        cubeRef.current.executeMove(notation)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [moveHistory.length])  // 依赖 history.length 确保 handleUndo 闭包内拿到最新状态
+
   /* ---- 还原检测：监听操作历史变化 ---- */
   useEffect(() => {
     if (!wasScrambled) return // 初始归零才算还原
@@ -403,7 +439,7 @@ export default function Playground() {
             </div>
           </div>
 
-          {/* 底部提示 */}
+          {/* 底部提示：鼠标 + 键盘 */}
           <div style={{
             marginTop: '2rem', padding: '1rem 1.2rem',
             background: 'var(--bg2)', borderRadius: 'var(--radius)',
@@ -411,13 +447,28 @@ export default function Playground() {
             borderLeft: '3px solid var(--accent)',
           }}>
             <strong>交互说明：</strong>
-            鼠标左键点击面 = 逆时针旋转
+            鼠标左键点击面 = 逆时针
             &nbsp;|&nbsp;
-            鼠标右键点击面 = 顺时针旋转
+            鼠标右键点击面 = 顺时针
             &nbsp;|&nbsp;
             空白处拖拽 = 旋转视角
             &nbsp;|&nbsp;
             滚轮 = 缩放
+            <div style={{ marginTop: '0.5rem', borderTop: '1px dashed var(--rule)', paddingTop: '0.5rem' }}>
+              <strong>键盘快捷键</strong>
+              <span style={{ opacity: 0.6, marginLeft: '0.3rem' }}>(RLUDFB = 国际标准记法，取英文首字母 Right/Left/Up/Down/Front/Back)</span>：<br />
+              方向键 ↑↓←→ / 字母键 RLUDFB = 顺时针
+              &nbsp;|&nbsp;
+              Shift + 上述按键 = 逆时针
+              &nbsp;|&nbsp;
+              W/S = 前/后面
+              &nbsp;|&nbsp;
+              Ctrl+Z = 撤销
+              &nbsp;|&nbsp;
+              Space = 打乱
+              &nbsp;|&nbsp;
+              Esc = 重置
+            </div>
           </div>
 
           {/* 还原成功弹窗 */}

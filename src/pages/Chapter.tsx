@@ -23,7 +23,13 @@ interface ChapterData {
 }
 
 /* ===== 记法 & 面名称映射（魔方新手友好） ===== */
-/** 魔方记法 → 中文面名对照表 */
+/**
+ * 魔方记法 → 中文面名对照表
+ * RLUDFB 是国际标准魔方记法，取英文首字母：
+ * R = Right（右）, L = Left（左）, U = Up（上）,
+ * D = Down（下）, F = Front（前）, B = Back（后）
+ * 加 ' 表示逆时针（如 R' = 右面逆时针）
+ */
 const FACE_NAME: Record<string, string> = {
   'R': 'R（右面顺时针）',  "R'": "R'（右面逆时针）",
   'L': 'L（左面顺时针）',  "L'": "L'（左面逆时针）",

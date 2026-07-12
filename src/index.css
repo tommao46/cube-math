@@ -350,8 +350,20 @@ ul, ol { list-style: none; }
 .accordion-header:hover { background: var(--bg2); }
 .accordion-header.open { background: var(--accent-l); color: var(--accent); border-color: var(--accent); }
 .accordion-body {
-  padding: 1rem 1.25rem; font-size: 0.9rem; color: var(--ink2);
-  background: var(--bg); line-height: 1.7;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 1.25rem;
+  font-size: 0.9rem;
+  color: var(--ink2);
+  background: var(--bg);
+  line-height: 1.7;
+  opacity: 0;
+  transition: max-height 0.35s ease, padding 0.35s ease, opacity 0.25s ease;
+}
+.accordion-body.open {
+  max-height: 600px;   /* 足够容纳最长的折叠内容 */
+  padding: 1rem 1.25rem;
+  opacity: 1;
 }
 .accordion-arrow {
   font-size: 0.7rem; transition: transform 0.2s;

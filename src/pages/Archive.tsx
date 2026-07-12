@@ -82,11 +82,9 @@ export default function Archive() {
                   {s.title}
                   <span className={`accordion-arrow ${open === s.id ? 'open' : ''}`}>▼</span>
                 </button>
-                {open === s.id && (
-                  <div className="accordion-body">
-                    {s.body}
-                  </div>
-                )}
+                <div className={`accordion-body ${open === s.id ? 'open' : ''}`}>
+                  {s.body}
+                </div>
               </div>
             ))}
           </div>

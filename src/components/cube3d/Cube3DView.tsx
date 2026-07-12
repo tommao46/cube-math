@@ -377,8 +377,8 @@ const Cube3DView = forwardRef<Cube3DViewHandle, Cube3DViewProps>(function Cube3D
       const dx = e.clientX - o.lastMouse.x
       const dy = e.clientY - o.lastMouse.y
       o.lastMouse = { x: e.clientX, y: e.clientY }
-      o.theta -= dx * 0.005
-      o.phi += dy * 0.005
+      o.theta -= dx * 0.01
+      o.phi += dy * 0.01
       o.phi = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, o.phi))
       updateCamera()
     }
