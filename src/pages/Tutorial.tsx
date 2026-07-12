@@ -316,6 +316,7 @@ export default function Tutorial() {
   const [userNotations, setUserNotations] = useState<string[]>([])
   const [ready, setReady] = useState(false)        // 初始动画播放完毕，可以开始操作
   const [retryKey, setRetryKey] = useState(0)        // 用于强制重新触发 reset 操作
+  const [completedUpTo, setCompletedUpTo] = useState(0) // 真正完成到的步骤号（只有实操成功才递增）
 
   /* ---- Zustand store ---- */
   const storeHistory = useCubeStore((s) => s.history)
@@ -413,6 +414,14 @@ export default function Tutorial() {
     if (newMoves.length > 0 && isSolved(storeCubies)) {
       setTaskDone(true)
       setStarVisible(true)
+
+      // 记录完成的步骤号
+      const stepMap: Record<string, number> = {
+        'corner-practice': 2, 'edge-practice': 3, 'topcross-practice': 4,
+        'edgeloc-practice': 5, 'cornerloc-practice': 6, 'orient-practice': 7,
+      }
+      if (stepMap[phase]) setCompletedUpTo(stepMap[phase])
+
       // 依次推进：corner→edge→topcross→edgeloc→cornerloc→orient→done
       setTimeout(() => setPhase(
         phase === 'corner-practice' ? 'corner-done' :
@@ -486,8 +495,8 @@ export default function Tutorial() {
           { n: 6, label: '角归位', phase: 'cornerloc-intro' as Phase },
           { n: 7, label: '翻黄角', phase: 'orient-intro' as Phase },
         ].map(({ n, label, phase: targetPhase }) => {
-          const active = taskInfo.step === n
-          const done = taskInfo.step > n
+           const active = taskInfo.step === n
+           const done = n <= completedUpTo
           return (
             <button
               key={n}
@@ -577,7 +586,7 @@ export default function Tutorial() {
                 <button
                   className="btn btn-primary"
                   style={{ width: '100%' }}
-                  onClick={() => setPhase('corner-intro')}
+                  onClick={() => { setCompletedUpTo(1); setPhase('corner-intro') }}
                 >
                   下一步：复原角块 →
                 </button>
@@ -725,7 +734,7 @@ export default function Tutorial() {
                 <button
                   className="btn btn-primary"
                   style={{ width: '100%' }}
-                  onClick={() => setPhase('edge-intro')}
+                  onClick={() => { setCompletedUpTo(2); setPhase('edge-intro') }}
                 >
                   下一步：复原中层棱块 →
                 </button>
