@@ -24,6 +24,15 @@ type Phase =
   | 'topcross-intro'    /* 步骤4：黄色十字 — 介绍 */
   | 'topcross-guided'   /* 步骤4：黄色十字 — 引导演示 */
   | 'topcross-practice' /* 步骤4：黄色十字 — 实操 */
+  | 'edgeloc-intro'     /* 步骤5：棱块归位 — 介绍 */
+  | 'edgeloc-guided'    /* 步骤5：棱块归位 — 引导演示 */
+  | 'edgeloc-practice'  /* 步骤5：棱块归位 — 实操 */
+  | 'cornerloc-intro'   /* 步骤6：角块归位 — 介绍 */
+  | 'cornerloc-guided'  /* 步骤6：角块归位 — 引导演示 */
+  | 'cornerloc-practice'/* 步骤6：角块归位 — 实操 */
+  | 'orient-intro'      /* 步骤7：翻黄角 — 介绍 */
+  | 'orient-guided'     /* 步骤7：翻黄角 — 引导演示 */
+  | 'orient-practice'   /* 步骤7：翻黄角 — 实操 */
   | 'done'           /* 全部完成 */
 
 /* ---- 白色角块常量（步骤2） ---- */
@@ -118,6 +127,120 @@ const TOPCROSS_GUIDED_STEPS = [
   { notation: "F'", text: "F'：交换子完成 — 观察顶层黄色棱块朝向" },
 ]
 
+/* ---- 黄色棱块归位（步骤5）常量 ---- */
+
+/** 步骤5 初始打乱 */
+const EDGELOC_INITIAL_MOVES: Move[] = [
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: 1, direction: 1 },   // R
+]
+
+/** 步骤5-棱块归位解法：R U' R U R U R U' R' U' R2 */
+const EDGELOC_SOLUTION_MOVES: Move[] = [
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: 1, direction: 1 },   // R2 part 1
+  { axis: 'x', layer: 1, direction: 1 },   // R2 part 2
+]
+
+const EDGELOC_GUIDED_STEPS = [
+  { notation: 'R', text: 'R：启动棱块置换序列' },
+  { notation: "U'", text: "U'：位置准备" },
+  { notation: 'R', text: 'R：继续置换节奏' },
+  { notation: 'U', text: 'U：循环推进' },
+  { notation: 'R', text: 'R：累积置换效应' },
+  { notation: 'U', text: 'U：持续循环' },
+  { notation: 'R', text: 'R：关键中间位置' },
+  { notation: "U'", text: "U'：反向轨道回位" },
+  { notation: "R'", text: "R'：开始闭合，矩阵转置" },
+  { notation: "U'", text: "U'：配合闭合节奏" },
+  { notation: 'R2', text: 'R2：180°旋转 — 三个黄色棱块顺时针轮换' },
+]
+
+/* ---- 黄色角块归位（步骤6）常量 ---- */
+
+/** 步骤6 初始打乱 */
+const CORNERLOC_INITIAL_MOVES: Move[] = [
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: -1, direction: -1 }, // L' (axis x layer -1 direction -1)
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: -1, direction: 1 },  // L
+]
+
+/** 步骤6-角块归位解法：U R U' L' U R' U' L */
+const CORNERLOC_SOLUTION_MOVES: Move[] = [
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: -1, direction: -1 }, // L'
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: -1, direction: 1 },  // L
+]
+
+const CORNERLOC_GUIDED_STEPS = [
+  { notation: 'U', text: 'U：目标角块移入"待处理位"' },
+  { notation: 'R', text: 'R：核心操作启动' },
+  { notation: "U'", text: "U'：位置调整" },
+  { notation: "L'", text: "L'：换到另一个角块" },
+  { notation: 'U', text: 'U：返回交换路径' },
+  { notation: "R'", text: "R'：闭合，第一个角块抵达" },
+  { notation: "U'", text: "U'：为第二个角块腾出空间" },
+  { notation: 'L', text: 'L：第二个角块滑入 — 三个角块互换位置' },
+]
+
+/* ---- 翻黄角（步骤7）常量 ---- */
+
+/** 步骤7 初始打乱 */
+const ORIENT_INITIAL_MOVES: Move[] = [
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: 1 },   // U
+]
+
+/** 步骤7-翻黄角（Sune）：R U R' U R U2 R' */
+const ORIENT_SOLUTION_MOVES: Move[] = [
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'y', layer: 1, direction: 1 },   // U2 part 2
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+]
+
+const ORIENT_GUIDED_STEPS = [
+  { notation: 'R', text: 'R："打开右面"，为后续操作准备空间' },
+  { notation: 'U', text: 'U：将目标角块移入操作区' },
+  { notation: "R'", text: 'R\'："关上右面"（逆变换），不是简单撤销' },
+  { notation: 'U', text: 'U：进一步调整角块朝向' },
+  { notation: 'R', text: 'R：再次打开右面，准备第二轮' },
+  { notation: 'U2', text: 'U2：180°旋转 = 两个连续90°，不是矩阵平方' },
+  { notation: "R'", text: "R'：最终关闭，完成一个子角翻正" },
+]
+
 /* ---- 工具函数 ---- */
 
 /** Move → 记法文本 */
@@ -133,14 +256,20 @@ function moveToNotation(m: Move): string {
 
 /** 获取当前阶段的元信息 */
 function getTaskInfo(phase: Phase): { step: number; total: number; name: string } {
-  if (phase === 'cross') return { step: 1, total: 4, name: '白色十字' }
+  if (phase === 'cross') return { step: 1, total: 7, name: '白色十字' }
   const isCorner = phase === 'corner-intro' || phase === 'corner-guided' || phase === 'corner-practice' || phase === 'corner-done'
-  if (isCorner) return { step: 2, total: 4, name: '白色角块' }
+  if (isCorner) return { step: 2, total: 7, name: '白色角块' }
   const isEdge = phase === 'edge-intro' || phase === 'edge-guided' || phase === 'edge-practice'
-  if (isEdge) return { step: 3, total: 4, name: '中层棱块' }
+  if (isEdge) return { step: 3, total: 7, name: '中层棱块' }
   const isTopcross = phase === 'topcross-intro' || phase === 'topcross-guided' || phase === 'topcross-practice'
-  if (isTopcross) return { step: 4, total: 4, name: '黄色十字' }
-  return { step: 4, total: 4, name: '全部完成' }
+  if (isTopcross) return { step: 4, total: 7, name: '黄色十字' }
+  const isEdgeloc = phase === 'edgeloc-intro' || phase === 'edgeloc-guided' || phase === 'edgeloc-practice'
+  if (isEdgeloc) return { step: 5, total: 7, name: '棱块归位' }
+  const isCornerloc = phase === 'cornerloc-intro' || phase === 'cornerloc-guided' || phase === 'cornerloc-practice'
+  if (isCornerloc) return { step: 6, total: 7, name: '角块归位' }
+  const isOrient = phase === 'orient-intro' || phase === 'orient-guided' || phase === 'orient-practice'
+  if (isOrient) return { step: 7, total: 7, name: '翻黄角' }
+  return { step: 7, total: 7, name: '全部完成' }
 }
 
 /** 判断当前阶段是否属于角块步骤 */
@@ -156,6 +285,18 @@ function isEdgePhase(phase: Phase): boolean {
 /** 判断当前阶段是否属于顶面十字步骤 */
 function isTopcrossPhase(phase: Phase): boolean {
   return phase === 'topcross-intro' || phase === 'topcross-guided' || phase === 'topcross-practice'
+}
+
+function isEdgelocPhase(phase: Phase): boolean {
+  return phase === 'edgeloc-intro' || phase === 'edgeloc-guided' || phase === 'edgeloc-practice'
+}
+
+function isCornerlocPhase(phase: Phase): boolean {
+  return phase === 'cornerloc-intro' || phase === 'cornerloc-guided' || phase === 'cornerloc-practice'
+}
+
+function isOrientPhase(phase: Phase): boolean {
+  return phase === 'orient-intro' || phase === 'orient-guided' || phase === 'orient-practice'
 }
 
 /* ==================================================================== */
@@ -201,6 +342,12 @@ export default function Tutorial() {
       initMoves = EDGE_INITIAL_MOVES
     } else if (isTopcrossPhase(phase)) {
       initMoves = TOPCROSS_INITIAL_MOVES
+    } else if (isEdgelocPhase(phase)) {
+      initMoves = EDGELOC_INITIAL_MOVES
+    } else if (isCornerlocPhase(phase)) {
+      initMoves = CORNERLOC_INITIAL_MOVES
+    } else if (isOrientPhase(phase)) {
+      initMoves = ORIENT_INITIAL_MOVES
     }
     if (!initMoves || !cubeRef.current) return
 
@@ -220,10 +367,10 @@ export default function Tutorial() {
     }
 
     /* 动画结束后，根据子阶段决定下一步 */
-    if (phase === 'corner-guided' || phase === 'edge-guided' || phase === 'topcross-guided') {
+    if (phase === 'corner-guided' || phase === 'edge-guided' || phase === 'topcross-guided' || phase === 'edgeloc-guided' || phase === 'cornerloc-guided' || phase === 'orient-guided') {
       // 引导模式：启动逐步演示
       setTimeout(() => setGuidedIdx(0), d + 300)
-    } else if (phase === 'corner-practice' || phase === 'edge-practice' || phase === 'topcross-practice') {
+    } else if (phase === 'corner-practice' || phase === 'edge-practice' || phase === 'topcross-practice' || phase === 'edgeloc-practice' || phase === 'cornerloc-practice' || phase === 'orient-practice') {
       // 实操模式：标记为可操作
       setTimeout(() => setReady(true), d)
     }
@@ -236,6 +383,9 @@ export default function Tutorial() {
     if (phase === 'corner-guided') moves = CORNER_SOLUTION_MOVES
     else if (phase === 'edge-guided') moves = EDGE_SOLUTION_MOVES
     else if (phase === 'topcross-guided') moves = TOPCROSS_SOLUTION_MOVES
+    else if (phase === 'edgeloc-guided') moves = EDGELOC_SOLUTION_MOVES
+    else if (phase === 'cornerloc-guided') moves = CORNERLOC_SOLUTION_MOVES
+    else if (phase === 'orient-guided') moves = ORIENT_SOLUTION_MOVES
     if (!moves || guidedIdx < 0 || guidedIdx >= moves.length) return
 
     const t = setTimeout(() => {
@@ -247,11 +397,14 @@ export default function Tutorial() {
   /* ===== 监听用户实操：检测魔方是否还原 ===== */
   useEffect(() => {
     if (!ready || taskDone) return
-    if (phase !== 'corner-practice' && phase !== 'edge-practice' && phase !== 'topcross-practice') return
+    if (phase !== 'corner-practice' && phase !== 'edge-practice' && phase !== 'topcross-practice' && phase !== 'edgeloc-practice' && phase !== 'cornerloc-practice' && phase !== 'orient-practice') return
 
     const initMoves = phase === 'corner-practice'
       ? CORNER_INITIAL_MOVES : phase === 'edge-practice'
-      ? EDGE_INITIAL_MOVES : TOPCROSS_INITIAL_MOVES
+      ? EDGE_INITIAL_MOVES : phase === 'topcross-practice'
+      ? TOPCROSS_INITIAL_MOVES : phase === 'edgeloc-practice'
+      ? EDGELOC_INITIAL_MOVES : phase === 'cornerloc-practice'
+      ? CORNERLOC_INITIAL_MOVES : ORIENT_INITIAL_MOVES
     const offset = initMoves.length
     const newMoves = storeHistory.slice(offset)
     setUserNotations(newMoves.map(moveToNotation))
@@ -260,8 +413,15 @@ export default function Tutorial() {
     if (newMoves.length > 0 && isSolved(storeCubies)) {
       setTaskDone(true)
       setStarVisible(true)
-      // 角块完成 → corner-done，棱块完成 → topcross-intro，十字完成 → done
-      setTimeout(() => setPhase(phase === 'corner-practice' ? 'corner-done' : phase === 'edge-practice' ? 'topcross-intro' : 'done'), 600)
+      // 依次推进：corner→edge→topcross→edgeloc→cornerloc→orient→done
+      setTimeout(() => setPhase(
+        phase === 'corner-practice' ? 'corner-done' :
+        phase === 'edge-practice' ? 'topcross-intro' :
+        phase === 'topcross-practice' ? 'edgeloc-intro' :
+        phase === 'edgeloc-practice' ? 'cornerloc-intro' :
+        phase === 'cornerloc-practice' ? 'orient-intro' :
+        'done'
+      ), 600)
     }
   }, [storeCubies, storeHistory, phase, taskDone, ready])
 
@@ -288,11 +448,11 @@ export default function Tutorial() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           {/* 步骤指示器 */}
-          {[1, 2, 3, 4].map((n) => {
+          {[1, 2, 3, 4, 5, 6, 7].map((n) => {
             const isCurrent = n === taskInfo.step
             const isDone = n < taskInfo.step
             return (
-              <div key={n} title={['白色十字', '白色角块', '中层棱块', '黄色十字'][n - 1]} style={{
+              <div key={n} title={['白色十字', '白色角块', '中层棱块', '黄色十字', '棱块归位', '角块归位', '翻黄角'][n - 1]} style={{
                 width: isCurrent ? '12px' : '10px',
                 height: isCurrent ? '12px' : '10px',
                 borderRadius: '50%',
@@ -333,7 +493,7 @@ export default function Tutorial() {
                   { k: 'practice', label: '实操' },
                   { k: 'done', label: '完成' },
                 ] as const).map((s) => {
-                  const active = phase === `corner-${s.k}` || phase === `edge-${s.k}` || phase === `topcross-${s.k}`
+                  const active = phase === `corner-${s.k}` || phase === `edge-${s.k}` || phase === `topcross-${s.k}` || phase === `edgeloc-${s.k}` || phase === `cornerloc-${s.k}` || phase === `orient-${s.k}`
                   return (
                     <span key={s.k} style={{
                       padding: '0.15rem 0.6rem', borderRadius: '999px',
@@ -769,6 +929,321 @@ export default function Tutorial() {
             )}
 
             {/* ================================================================ */}
+            {/* 棱块归位（步骤5）— 介绍 */}
+            {/* ================================================================ */}
+            {phase === 'edgeloc-intro' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  黄色十字完成后，现在把黄色棱块移到正确位置。
+                  这是一个<strong>纯置换</strong>操作——只改变棱块的位置，不改变朝向。
+                </p>
+                <div style={{
+                  padding: '0.6rem 1rem', marginBottom: '1rem',
+                  background: '#FEF3C7', borderRadius: '8px',
+                  fontFamily: 'monospace', fontSize: '0.85rem',
+                  textAlign: 'center', color: '#B45309',
+                }}>
+                  R U' R U R U R U' R' U' R2
+                </div>
+                <ul style={{ fontSize: '0.82rem', color: 'var(--ink)', paddingLeft: '1.2rem', marginBottom: '1rem' }}>
+                  <li style={{ marginBottom: '0.3rem' }}>这是<strong>全排列群</strong>的经典操作——只改变位置不改朝向</li>
+                  <li style={{ marginBottom: '0.3rem' }}>公式有 11 步，但逻辑清晰：累积置换效应 → 逆向闭合</li>
+                  <li>R2（180°）不是矩阵平方，是两个连续 90° 旋转</li>
+                </ul>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-primary" onClick={() => setPhase('edgeloc-guided')}>
+                    看引导演示
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setPhase('edgeloc-practice')}>
+                    直接实操
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* 棱块归位 — 引导 */}
+            {phase === 'edgeloc-guided' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  观察棱块置换的逐步动画：
+                </p>
+                <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.8rem', flexWrap: 'wrap' }}>
+                  {EDGELOC_GUIDED_STEPS.map((s, i) => (
+                    <div key={i} style={{
+                      padding: '0.2rem 0.5rem', borderRadius: '6px',
+                      fontSize: '0.7rem',
+                      background: i === guidedIdx ? '#FEF3C7' : (guidedIdx > i ? '#DCFCE7' : 'var(--bg2)'),
+                      borderLeft: '3px solid ' + (i === guidedIdx ? '#F59E0B' : 'transparent'),
+                    }}>
+                      {s.notation}
+                    </div>
+                  ))}
+                </div>
+                {EDGELOC_GUIDED_STEPS.map((s, i) => (
+                  <p key={i} style={{
+                    fontSize: '0.78rem', color: i === guidedIdx ? 'var(--ink)' : 'var(--muted)',
+                    fontWeight: i === guidedIdx ? 600 : 400,
+                    marginBottom: '0.2rem',
+                  }}>{i + 1}. {s.text}</p>
+                ))}
+                {guidedIdx >= EDGELOC_GUIDED_STEPS.length - 1 && (
+                  <>
+                    <div style={{
+                      padding: '0.5rem 0.8rem', borderRadius: '6px',
+                      background: '#DCFCE7', fontSize: '0.82rem', marginBottom: '0.6rem',
+                    }}>
+                      ✅ 三个黄色棱块顺时针轮换完成
+                    </div>
+                    <button className="btn btn-primary" onClick={() => setPhase('edgeloc-practice')}>
+                      亲自试试 →
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* 棱块归位 — 实操 */}
+            {phase === 'edgeloc-practice' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  执行以下棱块置换：
+                </p>
+                <div style={{
+                  padding: '0.6rem 1rem', marginBottom: '1rem',
+                  background: '#FEF3C7', borderRadius: '8px',
+                  fontFamily: 'monospace', fontSize: '0.82rem', fontWeight: 700,
+                  textAlign: 'center', color: '#B45309',
+                }}>
+                  {EDGELOC_SOLUTION_MOVES.map(moveToNotation).join(' → ')}
+                </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>你已执行：</p>
+                  <div style={{
+                    padding: '0.4rem 0.8rem', borderRadius: '6px',
+                    background: 'var(--bg2)', fontFamily: 'monospace',
+                    fontSize: '0.82rem',
+                    color: userNotations.length > 0 ? 'var(--accent)' : 'var(--muted)',
+                  }}>
+                    {userNotations.length > 0 ? userNotations.join(' → ') : '等待操作…'}
+                  </div>
+                </div>
+                <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setRetryKey((k) => k + 1)}>
+                  重置重试
+                </button>
+              </>
+            )}
+
+            {/* ================================================================ */}
+            {/* 角块归位（步骤6）— 介绍 */}
+            {/* ================================================================ */}
+            {phase === 'cornerloc-intro' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  黄色棱块已归位，现在把黄色角块移到正确位置。
+                  这个操作是<strong>交换子 U R U' L' U R' U' L</strong>。
+                </p>
+                <div style={{
+                  padding: '0.6rem 1rem', marginBottom: '1rem',
+                  background: '#FEF3C7', borderRadius: '8px',
+                  fontFamily: 'monospace', fontSize: '0.85rem',
+                  textAlign: 'center', color: '#B45309',
+                }}>
+                  U R U' L' U R' U' L
+                </div>
+                <ul style={{ fontSize: '0.82rem', color: 'var(--ink)', paddingLeft: '1.2rem', marginBottom: '1rem' }}>
+                  <li style={{ marginBottom: '0.3rem' }}>这也是交换子结构：<strong>前半段 U R U' L'</strong> + <strong>后半段 U R' U' L</strong></li>
+                  <li style={{ marginBottom: '0.3rem' }}>前半段把角块"搬出来"，后半段"换进去"</li>
+                  <li>角块置换是<strong>奇置换</strong>（三个角块循环）</li>
+                </ul>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-primary" onClick={() => setPhase('cornerloc-guided')}>
+                    看引导演示
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setPhase('cornerloc-practice')}>
+                    直接实操
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* 角块归位 — 引导 */}
+            {phase === 'cornerloc-guided' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  观察角块交换的逐步动画：
+                </p>
+                <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.8rem', flexWrap: 'wrap' }}>
+                  {CORNERLOC_GUIDED_STEPS.map((s, i) => (
+                    <div key={i} style={{
+                      padding: '0.2rem 0.5rem', borderRadius: '6px',
+                      fontSize: '0.7rem',
+                      background: i === guidedIdx ? '#FEF3C7' : (guidedIdx > i ? '#DCFCE7' : 'var(--bg2)'),
+                      borderLeft: '3px solid ' + (i === guidedIdx ? '#F59E0B' : 'transparent'),
+                    }}>
+                      {s.notation}
+                    </div>
+                  ))}
+                </div>
+                {CORNERLOC_GUIDED_STEPS.map((s, i) => (
+                  <p key={i} style={{
+                    fontSize: '0.78rem', color: i === guidedIdx ? 'var(--ink)' : 'var(--muted)',
+                    fontWeight: i === guidedIdx ? 600 : 400,
+                    marginBottom: '0.2rem',
+                  }}>{i + 1}. {s.text}</p>
+                ))}
+                {guidedIdx >= CORNERLOC_GUIDED_STEPS.length - 1 && (
+                  <>
+                    <div style={{
+                      padding: '0.5rem 0.8rem', borderRadius: '6px',
+                      background: '#DCFCE7', fontSize: '0.82rem', marginBottom: '0.6rem',
+                    }}>
+                      ✅ 三个角块互换位置完成
+                    </div>
+                    <button className="btn btn-primary" onClick={() => setPhase('cornerloc-practice')}>
+                      亲自试试 →
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* 角块归位 — 实操 */}
+            {phase === 'cornerloc-practice' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  执行以下角块交换：
+                </p>
+                <div style={{
+                  padding: '0.6rem 1rem', marginBottom: '1rem',
+                  background: '#FEF3C7', borderRadius: '8px',
+                  fontFamily: 'monospace', fontSize: '0.82rem', fontWeight: 700,
+                  textAlign: 'center', color: '#B45309',
+                }}>
+                  {CORNERLOC_SOLUTION_MOVES.map(moveToNotation).join(' → ')}
+                </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>你已执行：</p>
+                  <div style={{
+                    padding: '0.4rem 0.8rem', borderRadius: '6px',
+                    background: 'var(--bg2)', fontFamily: 'monospace',
+                    fontSize: '0.82rem',
+                    color: userNotations.length > 0 ? 'var(--accent)' : 'var(--muted)',
+                  }}>
+                    {userNotations.length > 0 ? userNotations.join(' → ') : '等待操作…'}
+                  </div>
+                </div>
+                <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setRetryKey((k) => k + 1)}>
+                  重置重试
+                </button>
+              </>
+            )}
+
+            {/* ================================================================ */}
+            {/* 翻黄角（步骤7）— 介绍 */}
+            {/* ================================================================ */}
+            {phase === 'orient-intro' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  所有块都在正确位置，只剩黄色角块的朝向需要翻转。
+                  使用经典的 <strong>Sune</strong>：R U R' U R U2 R'。
+                </p>
+                <div style={{
+                  padding: '0.6rem 1rem', marginBottom: '1rem',
+                  background: '#FEF3C7', borderRadius: '8px',
+                  fontFamily: 'monospace', fontSize: '0.85rem',
+                  textAlign: 'center', color: '#B45309',
+                }}>
+                  R U R' U R U2 R'
+                </div>
+                <ul style={{ fontSize: '0.82rem', color: 'var(--ink)', paddingLeft: '1.2rem', marginBottom: '1rem' }}>
+                  <li style={{ marginBottom: '0.3rem' }}>Sune 是<strong>3-cycle</strong>——每次翻转一个角块</li>
+                  <li style={{ marginBottom: '0.3rem' }}>U2 = 两个连续 90° 旋转，<strong>不是</strong>矩阵平方</li>
+                  <li>重复执行 Sune 即可翻正所有黄角，魔方完成！</li>
+                </ul>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-primary" onClick={() => setPhase('orient-guided')}>
+                    看引导演示
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setPhase('orient-practice')}>
+                    直接实操
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* 翻黄角 — 引导 */}
+            {phase === 'orient-guided' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  观察 Sune 的逐步操作：
+                </p>
+                <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.8rem', flexWrap: 'wrap' }}>
+                  {ORIENT_GUIDED_STEPS.map((s, i) => (
+                    <div key={i} style={{
+                      padding: '0.2rem 0.5rem', borderRadius: '6px',
+                      fontSize: '0.7rem',
+                      background: i === guidedIdx ? '#FEF3C7' : (guidedIdx > i ? '#DCFCE7' : 'var(--bg2)'),
+                      borderLeft: '3px solid ' + (i === guidedIdx ? '#F59E0B' : 'transparent'),
+                    }}>
+                      {s.notation}
+                    </div>
+                  ))}
+                </div>
+                {ORIENT_GUIDED_STEPS.map((s, i) => (
+                  <p key={i} style={{
+                    fontSize: '0.78rem', color: i === guidedIdx ? 'var(--ink)' : 'var(--muted)',
+                    fontWeight: i === guidedIdx ? 600 : 400,
+                    marginBottom: '0.2rem',
+                  }}>{i + 1}. {s.text}</p>
+                ))}
+                {guidedIdx >= ORIENT_GUIDED_STEPS.length - 1 && (
+                  <>
+                    <div style={{
+                      padding: '0.5rem 0.8rem', borderRadius: '6px',
+                      background: '#DCFCE7', fontSize: '0.82rem', marginBottom: '0.6rem',
+                    }}>
+                      ✅ 一个子角翻正！魔方可继续重复直至全部完成
+                    </div>
+                    <button className="btn btn-primary" onClick={() => setPhase('orient-practice')}>
+                      亲自试试 →
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* 翻黄角 — 实操 */}
+            {phase === 'orient-practice' && (
+              <>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  执行 Sune 翻转黄色角块：
+                </p>
+                <div style={{
+                  padding: '0.6rem 1rem', marginBottom: '1rem',
+                  background: '#FEF3C7', borderRadius: '8px',
+                  fontFamily: 'monospace', fontSize: '0.82rem', fontWeight: 700,
+                  textAlign: 'center', color: '#B45309',
+                }}>
+                  {ORIENT_SOLUTION_MOVES.map(moveToNotation).join(' → ')}
+                </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>你已执行：</p>
+                  <div style={{
+                    padding: '0.4rem 0.8rem', borderRadius: '6px',
+                    background: 'var(--bg2)', fontFamily: 'monospace',
+                    fontSize: '0.82rem',
+                    color: userNotations.length > 0 ? 'var(--accent)' : 'var(--muted)',
+                  }}>
+                    {userNotations.length > 0 ? userNotations.join(' → ') : '等待操作…'}
+                  </div>
+                </div>
+                <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setRetryKey((k) => k + 1)}>
+                  重置重试
+                </button>
+              </>
+            )}
+
+            {/* ================================================================ */}
             {/* 全部完成 */}
             {/* ================================================================ */}
             {phase === 'done' && (
@@ -782,11 +1257,12 @@ export default function Tutorial() {
                   </div>
                 )}
                 <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.5rem' }}>
-                  你成功完成了四步骤：白色十字 → 白色角块（逆序列法则） → 中层棱块（共轭变换） → 黄色十字（交换子）。
+                  你成功完成了七步骤全部复原：白色十字 → 白色角块（逆序列法则） → 中层棱块（共轭变换） → 黄色十字（交换子） → 棱块归位（置换群） → 角块归位（交换子）→ 翻黄角（Sune）。
                 </p>
-                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '1rem' }}>
-                  <strong>你已经亲身体验了线代三大核心工具的实战应用</strong>，
-                  剩余步骤（黄色顶面角块归位、顶层棱角归位）将在后续版本中使用更多群论工具继续指导。
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.5rem' }}>
+                  <strong>你已经亲身体验了线代→群论的完整渐进教学闭环</strong>：
+                  打开→操作→关上（交换子）、逆序列、乘法不可交换（Sune 的效果与顺序相关）、
+                  置换循环、奇置换与偶置换——全部通过实际操作！
                 </p>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <Link to="/chapter/solve" className="btn btn-outline" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
