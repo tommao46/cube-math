@@ -7,8 +7,12 @@ import type { Cube3DViewHandle } from '../components/cube3d/Cube3DView'
 import {
   multiply3x3, ROTATION_MATRICES, inverseMatrix, matrixEqual,
 } from '../lib/matrixMath'
-import ReverseSequenceDemo from '../components/demo/ReverseSequenceDemo'
-import ConjugateDemo from '../components/demo/ConjugateDemo'
+import SolveDemoPanel from '../components/demo/SolveDemoPanel'
+import {
+  getCornerParity, getEdgeParity,
+  getCornerOrientation, getEdgeOrientation,
+} from '../lib/parity'
+import { useCubeStore } from '../store/cubeStore'
 
 /* ===== 章节数据结构 ===== */
 interface ChapterData {
@@ -505,9 +509,19 @@ function InverseDemo({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle | 
 function InvariantDemo({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle | null> }) {
   const [scrambled, setScrambled] = useState(false)
   const [count, setCount] = useState(0)
-  const [showIllegal, setShowIllegal] = useState(false)
+  const [showParity, setShowParity] = useState(false)
 
-  const handleIllegalSwap = useCallback(() => { setShowIllegal(true) }, [])
+  // 从 store 读取当前方块数据，用于 parity 计算
+  const storeCubies = useCubeStore((s) => s.cubies)
+
+  // 实时计算奇偶性 & 色向不变量
+  const cornerParity = getCornerParity(storeCubies)
+  const edgeParity = getEdgeParity(storeCubies)
+  const parityMatch = cornerParity === edgeParity
+  const cornerOrient = getCornerOrientation(storeCubies)
+  const edgeOrient = getEdgeOrientation(storeCubies)
+
+  const handleCheckParity = useCallback(() => { setShowParity(true) }, [])
 
   // 随机打乱：先重置再打乱 12 步，让用户观察中心块不动
   const handleScramble = useCallback(() => {
@@ -563,91 +577,31 @@ function InvariantDemo({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle 
         >
           重置
         </button>
-        <button className="btn btn-outline" style={{ fontSize: '0.82rem', color: '#DC2626', borderColor: '#DC2626' }} onClick={handleIllegalSwap}>非法状态</button>
+        <button className="btn btn-outline" style={{ fontSize: '0.82rem', color: '#DC2626', borderColor: '#DC2626' }} onClick={handleCheckParity}>检查奇偶性</button>
       </div>
       <div style={{ marginTop: '0.8rem', padding: '0.6rem 0.8rem', borderRadius: '6px', background: '#FEF3C7', borderLeft: '3px solid #F59E0B', fontSize: '0.8rem', color: 'var(--ink2)' }}>更深层的不变量：角块排列的奇偶性和棱块排列的奇偶性始终相同。因此不可能只交换两个角块而其他一切不动——这不是技术不够，是数学约束。</div>
-      {showIllegal && (<div style={{ marginTop: '0.6rem', padding: '0.6rem 0.8rem', borderRadius: '6px', background: '#FEE2E2', fontSize: '0.82rem', color: '#DC2626' }}>这是一个<strong>数学上不可能</strong>的状态！只交换两个角块违反了奇偶性守恒——即使你拆散魔方重新组装也无法通过合法转动达到。</div>)}
-    </div>
-  )
-}
-
-/* ============================ 交换子动画演示组件 ============================ */
-function CommutatorDemo({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle | null> }) {
-  const MOVES = ['R', 'U', "R'", "U'"] as const
-  const [step, setStep] = useState(0)
-  const [running, setRunning] = useState(false)
-  const [done, setDone] = useState(false)
-  const handlePlay = useCallback(() => {
-    if (running) return
-    cubeRef.current?.reset()
-    setStep(0); setDone(false); setRunning(true)
-    let delay = 600
-    for (let i = 0; i < MOVES.length; i++) {
-      setTimeout(() => {
-        cubeRef.current?.executeMove(MOVES[i])
-        setStep(i + 1)
-        if (i === MOVES.length - 1) { setDone(true); setRunning(false) }
-      }, delay)
-      delay += 1000
-    }
-  }, [running])
-  const handleReset = useCallback(() => { cubeRef.current?.reset(); setStep(0); setDone(false); setRunning(false) }, [])
-  return (
-    <div className="card" style={{ marginBottom: '1rem', borderLeft: '4px solid #8B5CF6' }}>
-      <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.6rem' }}>交换子演示 [X, Y] = X·Y·X'·Y'</h3>
-      <p style={{ fontSize: '0.8rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>点击播放交换子观察：R·U·R'·U' 只产生 3-循环（3 个角块和 3 个棱块各自轮换，其余不变）</p>
-      <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '0.8rem' }}>
-        {MOVES.map((move, i) => (<div key={i} style={{ flex: 1, padding: '0.3rem', textAlign: 'center', borderRadius: '4px', fontSize: '0.78rem', fontFamily: 'monospace', background: step > i ? '#EDE9FE' : step === i && running ? '#FDE68A' : 'var(--bg2)', fontWeight: step > i ? 700 : 400, color: step > i ? '#7C3AED' : 'var(--ink2)' }}>{move}</div>))}
+      {showParity && (
+      <div style={{
+        marginTop: '0.6rem', padding: '0.6rem 0.8rem', borderRadius: '6px',
+        background: parityMatch ? '#DCFCE7' : '#FEE2E2',
+        fontSize: '0.82rem', color: parityMatch ? '#16A34A' : '#DC2626',
+        lineHeight: 1.7,
+      }}>
+        <div style={{ fontWeight: 700, marginBottom: '0.3rem' }}>
+          {parityMatch ? '合法状态 ✓' : '非法状态 ✗'}
+        </div>
+        <div>角块奇偶性 = <strong>{cornerParity}</strong> &nbsp;|&nbsp; 棱块奇偶性 = <strong>{edgeParity}</strong></div>
+        <div style={{ marginTop: '0.2rem' }}>
+          角块色向 mod 3 = <strong>{cornerOrient}</strong> (合法=0)
+          &nbsp;|&nbsp; 棱块色向 mod 2 = <strong>{edgeOrient}</strong> (合法=0)
+        </div>
+        <div style={{ marginTop: '0.3rem', fontSize: '0.75rem', color: 'var(--ink2)' }}>
+          {parityMatch
+            ? '角块奇偶性 = 棱块奇偶性，满足守恒约束'
+            : '角块奇偶性 ≠ 棱块奇偶性 — 数学上不可能通过合法转动达到此状态'}
+        </div>
       </div>
-      {done && <div style={{ marginBottom: '0.8rem', padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#EDE9FE', fontSize: '0.82rem', color: '#7C3AED', fontWeight: 600 }}>交换子完成！只产生了 3-循环（3 角块 + 3 棱块各自轮换）</div>}
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button className="btn btn-primary" style={{ fontSize: '0.82rem' }} onClick={handlePlay} disabled={running}>{running ? '播放中...' : '▶ 播放交换子'}</button>
-        <button className="btn btn-outline" style={{ fontSize: '0.82rem' }} onClick={handleReset}>重置</button>
-      </div>
-    </div>
-  )
-}
-
-/* ============================ 主组件 ============================ */
-
-
-/* ============================ 第6节专属：Tab 演示面板 ============================ */
-/** 右栏演示面板：用 tab 切换逆序撤销/共轭变换/交换子 */
-function SolveDemoPanel({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle | null> }) {
-  const [tab, setTab] = useState<'reverse' | 'conjugate' | 'commutator'>('reverse')
-  const tabs = [
-    { key: 'reverse' as const, label: '逆序撤销', icon: '🔄', color: '#10B981' },
-    { key: 'conjugate' as const, label: '共轭变换', icon: '🍚', color: '#F59E0B' },
-    { key: 'commutator' as const, label: '交换子', icon: '⚡', color: '#EF4444' },
-  ]
-  return (
-    <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-      {/* Tab 栏 */}
-      <div style={{ display: 'flex', borderBottom: '2px solid var(--rule)' }}>
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            style={{
-              flex: 1, padding: '0.5rem 0.3rem', fontSize: '0.78rem',
-              fontWeight: tab === t.key ? 700 : 400,
-              borderBottom: tab === t.key ? `3px solid ${t.color}` : '3px solid transparent',
-              background: tab === t.key ? '#fff' : 'var(--bg2)',
-              color: tab === t.key ? t.color : 'var(--ink2)',
-              border: 'none', cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {t.icon} {t.label}
-          </button>
-        ))}
-      </div>
-      {/* Tab 内容 */}
-      <div style={{ padding: '0.8rem 1rem' }}>
-        {tab === 'reverse' && <ReverseSequenceDemo cubeRef={cubeRef} />}
-        {tab === 'conjugate' && <ConjugateDemo cubeRef={cubeRef} />}
-        {tab === 'commutator' && <CommutatorDemo cubeRef={cubeRef} />}
-      </div>
+    )}
     </div>
   )
 }

@@ -19,6 +19,7 @@ type Phase =
   | 'corner-practice'/* 步骤2：白色角块 — 实操 */
   | 'corner-done'    /* 步骤2：完成 */
   | 'edge-intro'     /* 步骤3：中层棱块 — 介绍 */
+  | 'edge-done'     /* 步骤3：完成 */
   | 'edge-guided'    /* 步骤3：中层棱块 — 引导演示 */
   | 'edge-practice'  /* 步骤3：中层棱块 — 实操 */
   | 'topcross-intro'    /* 步骤4：黄色十字 — 介绍 */
@@ -129,17 +130,23 @@ const TOPCROSS_GUIDED_STEPS = [
 
 /* ---- 黄色棱块归位（步骤5）常量 ---- */
 
-/** 步骤5 初始打乱 */
+/** 步骤5 初始打乱：EDGELOC_SOLUTION_MOVES 的逆序列
+ *  SOLUTION = R U' R U R U R U' R' U' R2
+ *  INVERSE  = R2' U R U R' U' R' U' R' U R' = R' R' U R U R' U' R' U' R' U R'
+ */
 const EDGELOC_INITIAL_MOVES: Move[] = [
-  { axis: 'x', layer: 1, direction: 1 },   // R
-  { axis: 'y', layer: 1, direction: -1 },  // U'
   { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'x', layer: 1, direction: -1 },  // R'  (R2' = R' R')
   { axis: 'y', layer: 1, direction: 1 },   // U
   { axis: 'x', layer: 1, direction: 1 },   // R
   { axis: 'y', layer: 1, direction: 1 },   // U
   { axis: 'x', layer: 1, direction: -1 },  // R'
   { axis: 'y', layer: 1, direction: -1 },  // U'
-  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: 1, direction: -1 },  // R'
+  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'x', layer: 1, direction: -1 },  // R'
 ]
 
 /** 步骤5-棱块归位解法：R U' R U R U R U' R' U' R2 */
@@ -174,16 +181,19 @@ const EDGELOC_GUIDED_STEPS = [
 
 /* ---- 黄色角块归位（步骤6）常量 ---- */
 
-/** 步骤6 初始打乱 */
+/** 步骤6 初始打乱：CORNERLOC_SOLUTION_MOVES 的逆序列
+ *  SOLUTION = U R U' L' U R' U' L
+ *  INVERSE  = L' U R U' L U R' U'
+ */
 const CORNERLOC_INITIAL_MOVES: Move[] = [
+  { axis: 'x', layer: -1, direction: -1 }, // L'
   { axis: 'y', layer: 1, direction: 1 },   // U
   { axis: 'x', layer: 1, direction: 1 },   // R
   { axis: 'y', layer: 1, direction: -1 },  // U'
-  { axis: 'x', layer: -1, direction: -1 }, // L' (axis x layer -1 direction -1)
+  { axis: 'x', layer: -1, direction: 1 },  // L
   { axis: 'y', layer: 1, direction: 1 },   // U
   { axis: 'x', layer: 1, direction: -1 },  // R'
   { axis: 'y', layer: 1, direction: -1 },  // U'
-  { axis: 'x', layer: -1, direction: 1 },  // L
 ]
 
 /** 步骤6-角块归位解法：U R U' L' U R' U' L */
@@ -211,12 +221,19 @@ const CORNERLOC_GUIDED_STEPS = [
 
 /* ---- 翻黄角（步骤7）常量 ---- */
 
-/** 步骤7 初始打乱 */
+/** 步骤7 初始打乱：ORIENT_SOLUTION_MOVES 的逆序列
+ *  SOLUTION = R U R' U R U2 R' (Sune)
+ *  INVERSE  = R U2' R' U' R U' R' = R U' U' R' U' R U' R'
+ */
 const ORIENT_INITIAL_MOVES: Move[] = [
   { axis: 'x', layer: 1, direction: 1 },   // R
-  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'y', layer: 1, direction: -1 },  // U'  (U2' = U' U')
   { axis: 'x', layer: 1, direction: -1 },  // R'
-  { axis: 'y', layer: 1, direction: 1 },   // U
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: 1, direction: 1 },   // R
+  { axis: 'y', layer: 1, direction: -1 },  // U'
+  { axis: 'x', layer: 1, direction: -1 },  // R'
 ]
 
 /** 步骤7-翻黄角（Sune）：R U R' U R U2 R' */
@@ -259,7 +276,7 @@ function getTaskInfo(phase: Phase): { step: number; total: number; name: string 
   if (phase === 'cross') return { step: 1, total: 7, name: '白色十字' }
   const isCorner = phase === 'corner-intro' || phase === 'corner-guided' || phase === 'corner-practice' || phase === 'corner-done'
   if (isCorner) return { step: 2, total: 7, name: '白色角块' }
-  const isEdge = phase === 'edge-intro' || phase === 'edge-guided' || phase === 'edge-practice'
+  const isEdge = phase === 'edge-intro' || phase === 'edge-guided' || phase === 'edge-practice' || phase === 'edge-done'
   if (isEdge) return { step: 3, total: 7, name: '中层棱块' }
   const isTopcross = phase === 'topcross-intro' || phase === 'topcross-guided' || phase === 'topcross-practice'
   if (isTopcross) return { step: 4, total: 7, name: '黄色十字' }
@@ -425,7 +442,7 @@ export default function Tutorial() {
       // 依次推进：corner→edge→topcross→edgeloc→cornerloc→orient→done
       setTimeout(() => setPhase(
         phase === 'corner-practice' ? 'corner-done' :
-        phase === 'edge-practice' ? 'topcross-intro' :
+        phase === 'edge-practice' ? 'edge-done' :
         phase === 'topcross-practice' ? 'edgeloc-intro' :
         phase === 'edgeloc-practice' ? 'cornerloc-intro' :
         phase === 'cornerloc-practice' ? 'orient-intro' :
@@ -1331,6 +1348,37 @@ export default function Tutorial() {
                 </div>
                 <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setRetryKey((k) => k + 1)}>
                   重置重试
+                </button>
+              </>
+            )}
+
+            {/* ================================================================ */}
+            {/* 阶段3-完成：棱块完成，过渡到全部完成 */}
+            {/* ================================================================ */}
+            {phase === 'edge-done' && (
+              <>
+                {starVisible && (
+                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '3rem' }}>&#x2b50;</span>
+                    <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent)', marginTop: '0.5rem' }}>
+                      棱块归位完成！
+                    </p>
+                  </div>
+                )}
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
+                  你刚用共轭变换（前半段 U R U' R' 搬入 + 后半段 U' F' U F 关闭）
+                  成功归位了一个中层棱块。P路A路P' 的结构让你精准操作而不破坏已复原部分。
+                </p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink2)', marginBottom: '1rem' }}>
+                  白色十字、白色角块、中层棱块 — 全部完成！
+                  接下来可以进入自由练习模式，巩固这些技巧。
+                </p>
+                <button
+                  className="btn btn-primary"
+                  style={{ width: '100%' }}
+                  onClick={() => setPhase('topcross-intro')}
+                >
+                  进入下一步：黄色十字 &#x2192;
                 </button>
               </>
             )}
