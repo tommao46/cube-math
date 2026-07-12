@@ -50,43 +50,32 @@ export default function Landing() {
         <div className="hero-inner">
           {/* 左：文字区 */}
           <div className="hero-text">
-            <div className="hero-badge">线性代数 × 魔方</div>
+            <div className="hero-badge"><span className="hero-badge-dot" />线性代数 × 魔方</div>
             <h1>魔方不是靠背的<br />是用<em>数学</em>推出来的</h1>
-            <p className="sub">
-              用线性代数思维理解魔方转动，用抵消法自主推导复原方案——零公式，纯逻辑。
+            <p className="hero-desc">
+              用线性代数思维理解魔方转动，用抵消法自主推导复原方案。<br />
+              <strong>每一步转动都有数学解释</strong>——零公式，纯逻辑。
             </p>
-            <p style={{
-              fontSize: '0.88rem', fontWeight: 700, color: 'var(--accent)',
-              marginTop: '-0.5rem', marginBottom: '1.5rem',
-            }}>
-              每一步转动都有数学解释 — 用线性代数 0 公式还原魔方
-            </p>
-            <div className="btn-row">
-              <Link to="/chapter/intro" className="btn btn-primary">从零开始，用数学看懂魔方</Link>
-              <Link to="/chapter/solve" className="btn btn-outline">动手推导，体验复原逻辑</Link>
+            <div className="hero-btn-row">
+              <Link to="/chapter/intro" className="hero-btn-primary">从零开始，用数学看懂魔方</Link>
+              <Link to="/chapter/solve" className="hero-btn-outline">动手推导，体验复原逻辑</Link>
             </div>
           </div>
 
           {/* 右：3D 魔方 + 公式标注 */}
           <div className="hero-visual">
-            <div style={{
-              width: '340px', height: '340px',
-              borderRadius: 'var(--radius)',
-              overflow: 'hidden', border: '1px solid var(--rule)',
-            }}>
+            <div className="hero-cube-wrap">
               <Cube3DView ref={cubeRef} disableStore />
             </div>
-            <div style={{ marginTop: '0.6rem', minHeight: '2rem' }}>
+            <div className="hero-label">
               {stepIndex >= 0 && (
-                <div style={{
-                  padding: '0.4rem 0.8rem', borderRadius: '8px',
-                  background: stepIndex < SCRAMBLE_MOVES.length ? '#EFF6FF' : '#FEF3C7',
-                  fontSize: '0.78rem', fontWeight: 600,
-                  borderLeft: `3px solid ${
-                    stepIndex < SCRAMBLE_MOVES.length ? '#3B82F6' : '#F59E0B'
-                  }`,
-                  transition: 'all 0.3s ease',
-                }}>
+                <div
+                  className="hero-label-inner"
+                  style={{
+                    background: stepIndex < SCRAMBLE_MOVES.length ? '#EFF6FF' : '#FEF3C7',
+                    borderLeftColor: stepIndex < SCRAMBLE_MOVES.length ? '#3B82F6' : '#F59E0B',
+                  }}
+                >
                   {stepIndex < SCRAMBLE_MOVES.length
                     ? `打乱中… ${SCRAMBLE_MOVES[stepIndex]}`
                     : solveLabels[stepIndex - SCRAMBLE_MOVES.length]?.text ?? '…'}
