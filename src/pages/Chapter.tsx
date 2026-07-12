@@ -7,6 +7,8 @@ import type { Cube3DViewHandle } from '../components/cube3d/Cube3DView'
 import {
   multiply3x3, ROTATION_MATRICES, inverseMatrix, matrixEqual,
 } from '../lib/matrixMath'
+import ReverseSequenceDemo from '../components/demo/ReverseSequenceDemo'
+import ConjugateDemo from '../components/demo/ConjugateDemo'
 
 /* ===== 章节数据结构 ===== */
 interface ChapterData {
@@ -29,6 +31,22 @@ const FACE_NAME: Record<string, string> = {
   'D': 'D（底面顺时针）',  "D'": "D'（底面逆时针）",
   'F': 'F（前面顺时针）',  "F'": "F'（前面逆时针）",
   'B': 'B（后面顺时针）',  "B'": "B'（后面逆时针）",
+}
+
+/* ===== 章节颜色映射 ===== */
+const CHAPTER_COLORS: Record<string, string> = {
+  intro: '#3B82F6', matrix: '#10B981', compose: '#F59E0B',
+  inverse: '#8B5CF6', invariant: '#06B6D4', solve: '#EF4444',
+}
+
+/* ===== 章节要点摘要 ===== */
+const CHAPTER_SUMMARY: Record<string, string[]> = {
+  intro: ['状态 = 向量', '26 块各有位置', '还原态 = 基准向量'],
+  matrix: ['转动 = 旋转矩阵', 'R = 绕X轴90°', '矩阵不满足交换律'],
+  compose: ['R·U ≠ U·R', '顺序影响结果', '矩阵乘法 ≠ 魔方操作可交换'],
+  inverse: ['逆操作 = 逆矩阵', '(A·B)⁻¹ = B⁻¹·A⁻¹', '后做的先撤销'],
+  invariant: ['中心块不动', '奇偶性守恒', '不可能只换两角'],
+  solve: ['逆序撤销（初级）', '共轭变换（中级）', '交换子（高级）'],
 }
 
 /* ===== 第3章专属：交换律验证区配置 ===== */
@@ -66,14 +84,14 @@ const CHAPTER_CONTENT: Record<string, ChapterData> = {
     prev: 'intro', next: 'compose',
     keyPoints: [
       '魔方的每一次转动，本质上是对选定层上所有方块位置和朝向的重新排列',
-      '在数学上，这种"重新排列"对应一个置换矩阵——每一行每一列只有一个 1',
+      '在数学上，我们可以用 3×3 旋转矩阵描述方块坐标的变换——它保持长度和角度不变（注：这是简化类比，魔方操作的严谨本质是置换群，详见数学档案馆）',
       '右面顺时针转（R）就是把右层 8 个方块沿 X 轴旋转 90°',
       '重点：不同的面转动对应不同的变换矩阵，矩阵运算不满足交换律',
     ],
     matrices: [
       {
-        label: 'R 面转动对应的变换矩阵（简化示意）',
-        data: [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+        label: 'R 面转动对应的旋转矩阵（绕X轴+90°）',
+        data: [[1, 0, 0], [0, 0, -1], [0, 1, 0]],
       },
     ],
     demoHint: '将鼠标移到魔方右面上，左键点击=逆时针，右键点击=顺时针',
@@ -115,11 +133,11 @@ const CHAPTER_CONTENT: Record<string, ChapterData> = {
     keyPoints: [
       '在魔方中，某些性质在任意合法操作下都保持不变（称为"不变量"）',
       '例如：6 个中心块的相对位置永远不变（对 3 阶魔方而言）',
-      '又如：魔方的合法转动有一个隐藏规则——你不可能只交换两个角块而其他块不变',
-      '这类似线代中"行列式为 0 的矩阵不可逆"——有些约束决定了什么状态是可达的',
+      '更深层的约束：角块排列的奇偶性和棱块排列的奇偶性始终相同——所以不可能只交换两个角块而其他块不变',
+      '这类似正交矩阵的行列式满足 det(A)·det(B) = det(AB)：乘积关系恒成立。魔方中角块奇偶性 × 棱块奇偶性恒为偶（+1），所以不可能只交换两个角块而其他块不变',
     ],
     demoHint: '尝试打乱魔方，观察中心块的位置是否始终不变',
-    analogy: '类比：行列式 det(AB) = det(A)·det(B)，如果 A 的行列式为 0，则无法找到逆矩阵。类似地，魔方中的某些约束决定了并非所有排列都是合法的魔方状态。',
+    analogy: '类比：正交矩阵的行列式满足 det(A)·det(B) = det(AB)，这个乘积关系永远不变。魔方也有不变量：任何合法操作下，角块排列的奇偶性和棱块排列的奇偶性始终相同（两者乘积恒为偶），所以不可能只交换两个角块而其他一切不动。',
   },
 
   solve: {
@@ -128,10 +146,10 @@ const CHAPTER_CONTENT: Record<string, ChapterData> = {
     prev: 'invariant', next: null,
     keyPoints: [
       '复原魔方的本质：找到一系列操作的逆操作，按逆序执行',
-      '核心工具——交换子 [X, Y] = X·Y·X\'·Y\'：只改变目标块，不破坏已复原部分',
-      '核心工具——三明治变换（共轭）：P·A·P\' 先搬到操作层→执行→搬回来',
-      '核心工具——逆序撤销：(A·B·C)⁻¹ = C⁻¹·B⁻¹·A⁻¹ 后做的先撤销',
-      '下面的引导将带你亲手用这些工具复原一个角块',
+      '核心工具（初级）——逆序撤销：(A·B·C)⁻¹ = C⁻¹·B⁻¹·A⁻¹，后做的先撤销。Tutorial 角块部分在教这个',
+      '核心工具（中级）——共轭变换：P·A·P\' 先搬到操作层→执行→搬回来。Tutorial 棱块部分在教这个',
+      '核心工具（高级）——交换子 [X, Y] = X·Y·X\'·Y\'：只产生 3-循环（通常影响 3 个角块和 3 个棱块），不破坏已复原部分。后续探索',
+      '下面的引导将带你亲手用逆序撤销和共轭变换复原角块和棱块',
     ],
     matrices: [],
     demoHint: '点击下方"开始引导"按钮，进入交互式复原引导',
@@ -481,6 +499,9 @@ function InverseDemo({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle | 
 function InvariantDemo({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle | null> }) {
   const [scrambled, setScrambled] = useState(false)
   const [count, setCount] = useState(0)
+  const [showIllegal, setShowIllegal] = useState(false)
+
+  const handleIllegalSwap = useCallback(() => { setShowIllegal(true) }, [])
 
   // 随机打乱：先重置再打乱 12 步，让用户观察中心块不动
   const handleScramble = useCallback(() => {
@@ -536,12 +557,94 @@ function InvariantDemo({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle 
         >
           重置
         </button>
+        <button className="btn btn-outline" style={{ fontSize: '0.82rem', color: '#DC2626', borderColor: '#DC2626' }} onClick={handleIllegalSwap}>非法状态</button>
+      </div>
+      <div style={{ marginTop: '0.8rem', padding: '0.6rem 0.8rem', borderRadius: '6px', background: '#FEF3C7', borderLeft: '3px solid #F59E0B', fontSize: '0.8rem', color: 'var(--ink2)' }}>更深层的不变量：角块排列的奇偶性和棱块排列的奇偶性始终相同。因此不可能只交换两个角块而其他一切不动——这不是技术不够，是数学约束。</div>
+      {showIllegal && (<div style={{ marginTop: '0.6rem', padding: '0.6rem 0.8rem', borderRadius: '6px', background: '#FEE2E2', fontSize: '0.82rem', color: '#DC2626' }}>这是一个<strong>数学上不可能</strong>的状态！只交换两个角块违反了奇偶性守恒——即使你拆散魔方重新组装也无法通过合法转动达到。</div>)}
+    </div>
+  )
+}
+
+/* ============================ 交换子动画演示组件 ============================ */
+function CommutatorDemo({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle | null> }) {
+  const MOVES = ['R', 'U', "R'", "U'"] as const
+  const [step, setStep] = useState(0)
+  const [running, setRunning] = useState(false)
+  const [done, setDone] = useState(false)
+  const handlePlay = useCallback(() => {
+    if (running) return
+    cubeRef.current?.reset()
+    setStep(0); setDone(false); setRunning(true)
+    let delay = 600
+    for (let i = 0; i < MOVES.length; i++) {
+      setTimeout(() => {
+        cubeRef.current?.executeMove(MOVES[i])
+        setStep(i + 1)
+        if (i === MOVES.length - 1) { setDone(true); setRunning(false) }
+      }, delay)
+      delay += 1000
+    }
+  }, [running])
+  const handleReset = useCallback(() => { cubeRef.current?.reset(); setStep(0); setDone(false); setRunning(false) }, [])
+  return (
+    <div className="card" style={{ marginBottom: '1rem', borderLeft: '4px solid #8B5CF6' }}>
+      <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.6rem' }}>交换子演示 [X, Y] = X·Y·X'·Y'</h3>
+      <p style={{ fontSize: '0.8rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>点击播放交换子观察：R·U·R'·U' 只产生 3-循环（3 个角块和 3 个棱块各自轮换，其余不变）</p>
+      <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '0.8rem' }}>
+        {MOVES.map((move, i) => (<div key={i} style={{ flex: 1, padding: '0.3rem', textAlign: 'center', borderRadius: '4px', fontSize: '0.78rem', fontFamily: 'monospace', background: step > i ? '#EDE9FE' : step === i && running ? '#FDE68A' : 'var(--bg2)', fontWeight: step > i ? 700 : 400, color: step > i ? '#7C3AED' : 'var(--ink2)' }}>{move}</div>))}
+      </div>
+      {done && <div style={{ marginBottom: '0.8rem', padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#EDE9FE', fontSize: '0.82rem', color: '#7C3AED', fontWeight: 600 }}>交换子完成！只产生了 3-循环（3 角块 + 3 棱块各自轮换）</div>}
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button className="btn btn-primary" style={{ fontSize: '0.82rem' }} onClick={handlePlay} disabled={running}>{running ? '播放中...' : '▶ 播放交换子'}</button>
+        <button className="btn btn-outline" style={{ fontSize: '0.82rem' }} onClick={handleReset}>重置</button>
       </div>
     </div>
   )
 }
 
 /* ============================ 主组件 ============================ */
+
+
+/* ============================ 第6节专属：Tab 演示面板 ============================ */
+/** 右栏演示面板：用 tab 切换逆序撤销/共轭变换/交换子 */
+function SolveDemoPanel({ cubeRef }: { cubeRef: React.RefObject<Cube3DViewHandle | null> }) {
+  const [tab, setTab] = useState<'reverse' | 'conjugate' | 'commutator'>('reverse')
+  const tabs = [
+    { key: 'reverse' as const, label: '逆序撤销', icon: '🔄', color: '#10B981' },
+    { key: 'conjugate' as const, label: '共轭变换', icon: '🍚', color: '#F59E0B' },
+    { key: 'commutator' as const, label: '交换子', icon: '⚡', color: '#EF4444' },
+  ]
+  return (
+    <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+      {/* Tab 栏 */}
+      <div style={{ display: 'flex', borderBottom: '2px solid var(--rule)' }}>
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            style={{
+              flex: 1, padding: '0.5rem 0.3rem', fontSize: '0.78rem',
+              fontWeight: tab === t.key ? 700 : 400,
+              borderBottom: tab === t.key ? `3px solid ${t.color}` : '3px solid transparent',
+              background: tab === t.key ? '#fff' : 'var(--bg2)',
+              color: tab === t.key ? t.color : 'var(--ink2)',
+              border: 'none', cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+      {/* Tab 内容 */}
+      <div style={{ padding: '0.8rem 1rem' }}>
+        {tab === 'reverse' && <ReverseSequenceDemo cubeRef={cubeRef} />}
+        {tab === 'conjugate' && <ConjugateDemo cubeRef={cubeRef} />}
+        {tab === 'commutator' && <CommutatorDemo cubeRef={cubeRef} />}
+      </div>
+    </div>
+  )
+}
 
 export default function Chapter() {
   const { id } = useParams<{ id: string }>()
@@ -588,14 +691,55 @@ export default function Chapter() {
       <div className="section">
         <div className="container">
           {/* 章节标题 */}
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.3rem' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.3rem', borderLeft: `5px solid ${CHAPTER_COLORS[id!]}`, paddingLeft: '0.8rem' }}>
             第 {CHAPTER_NUM[id!]} 节 &nbsp;{ch.title}
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--ink2)', marginBottom: '1.5rem' }}>
             {ch.subtitle}
           </p>
+          {/* ===== 第6节专属：终章渐变横幅 ===== */}
+          {id === 'solve' && (
+            <div style={{
+              marginBottom: '1.5rem',
+              padding: '1.2rem 1.5rem',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #1E1B4B 0%, #3B0764 40%, #7F1D1D 100%)',
+              color: '#fff',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.6rem' }}>
+                <span style={{ fontSize: '1.8rem' }}>🏆</span>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, letterSpacing: '0.5px' }}>
+                    终章挑战：把前面学的全部用上
+                  </h3>
+                  <p style={{ fontSize: '0.82rem', margin: '0.2rem 0 0 0', opacity: 0.85 }}>
+                    这一节将串联全部知识点，从"看着公式还原"进化到"理解每一步为什么这样做"
+                  </p>
+                </div>
+              </div>
+              {/* 三个核心工具预览标签 */}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {[
+                  { label: '初级 · 逆序撤销', color: '#10B981', icon: '🔄' },
+                  { label: '中级 · 共轭变换', color: '#F59E0B', icon: '🥪' },
+                  { label: '高级 · 交换子', color: '#EF4444', icon: '⚡' },
+                ].map((tool) => (
+                  <div key={tool.label} style={{
+                    display: 'flex', alignItems: 'center', gap: '0.3rem',
+                    padding: '0.3rem 0.7rem', borderRadius: '20px',
+                    background: 'rgba(255,255,255,0.15)',
+                    fontSize: '0.78rem', fontWeight: 600,
+                    border: `1px solid ${tool.color}40`,
+                  }}>
+                    <span>{tool.icon}</span>
+                    <span>{tool.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-          {/* 双栏布局 */}
+          {/* ===== 双栏布局 ===== */}
           <div className="two-col">
             {/* ===== 左侧：概念讲解区 ===== */}
             <div>
@@ -688,47 +832,99 @@ export default function Chapter() {
                       <MatrixDisplay data={m.data} />
                     </div>
                   ))}
+                  {id === 'matrix' && (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--ink3)', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                      ※ 此处用 3×3 旋转矩阵做简化类比，描述单个方块坐标的变换。魔方操作实际上是对 20 个可动方块的整体置换，严谨数学框架见<a href="#/archive" style={{ color: 'var(--accent)' }}>数学档案馆</a>。
+                    </p>
+                  )}
                 </div>
               )}
 
-              {/* 第6章专属：引导入口卡片 */}
+              {/* ===== 第6节专属：三大核心工具卡片网格 ===== */}
               {id === 'solve' && (
-                <div className="card" style={{ marginBottom: '1rem' }}>
-                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.8rem' }}>
-                    动手试试：复原一个角块
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.8rem', color: 'var(--accent)' }}>
+                    复原工具箱：三个层次的数学工具
                   </h3>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--ink2)', marginBottom: '0.8rem' }}>
-                    白色十字已就位，只剩一个角块需要归位。
-                    你将用「逆矩阵组合」的思路（R' D' R D），亲手把它送到位。
-                  </p>
-                  <div style={{
-                    fontSize: '0.78rem', color: 'var(--muted)',
-                    marginBottom: '1rem', lineHeight: 1.6,
-                  }}>
-                    后续完整路线图：
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
+                    {/* 初级：逆序撤销 */}
+                    <div className="card" style={{ marginBottom: 0, borderLeft: '4px solid #10B981', padding: '0.8rem 1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.4rem' }}>
+                        <span style={{ fontSize: '1rem' }}>🔄</span>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#10B981' }}>初级</span>
+                      </div>
+                      <p style={{ fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.3rem' }}>逆序撤销</p>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--ink2)', lineHeight: 1.5, marginBottom: 0 }}>
+                        (A·B·C)⁻¹ = C⁻¹·B⁻¹·A⁻¹
+                      </p>
+                      <p style={{ fontSize: '0.68rem', color: 'var(--muted)', lineHeight: 1.4, marginTop: '0.2rem' }}>
+                        后做的先撤销，Tutorial 角块在教这个
+                      </p>
+                    </div>
+                    {/* 中级：共轭变换 */}
+                    <div className="card" style={{ marginBottom: 0, borderLeft: '4px solid #F59E0B', padding: '0.8rem 1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.4rem' }}>
+                        <span style={{ fontSize: '1rem' }}>🥪</span>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#F59E0B' }}>中级</span>
+                      </div>
+                      <p style={{ fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.3rem' }}>共轭变换</p>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--ink2)', lineHeight: 1.5, marginBottom: 0 }}>
+                        P·A·P'：搬过去→执行→搬回来
+                      </p>
+                      <p style={{ fontSize: '0.68rem', color: 'var(--muted)', lineHeight: 1.4, marginTop: '0.2rem' }}>
+                        精准手术式操作，Tutorial 棱块在教这个
+                      </p>
+                    </div>
+                    {/* 高级：交换子 */}
+                    <div className="card" style={{ marginBottom: 0, borderLeft: '4px solid #EF4444', padding: '0.8rem 1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.4rem' }}>
+                        <span style={{ fontSize: '1rem' }}>⚡</span>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#EF4444' }}>高级</span>
+                      </div>
+                      <p style={{ fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.3rem' }}>交换子</p>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--ink2)', lineHeight: 1.5, marginBottom: 0 }}>
+                        [X,Y] = X·Y·X'·Y'：3-循环
+                      </p>
+                      <p style={{ fontSize: '0.68rem', color: 'var(--muted)', lineHeight: 1.4, marginTop: '0.2rem' }}>
+                        3-循环（3角块+3棱块），不破坏其他，后续探索
+                      </p>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--ink2)', marginBottom: '1rem' }}>
-                    <div style={{ marginBottom: '0.3rem' }}>✅ 步骤一：白色十字（直觉操作，无需公式）</div>
-                    <div style={{ marginBottom: '0.3rem' }}>
-                      ✅ 步骤二：白色角块 — 逆矩阵组合（R' D' R D）
-                    </div>
-                    <div style={{ marginBottom: '0.3rem' }}>
-                      <strong>✅ 步骤三：中层棱块 — 三明治变换（U R U' R' U' F' U F）</strong>
-                    </div>
-                    <div style={{ marginBottom: '0.3rem', color: 'var(--muted)' }}>⬜ 步骤四：黄色十字 — 共轭变换应用</div>
-                    <div style={{ marginBottom: '0.3rem', color: 'var(--muted)' }}>⬜ 步骤五：顶层棱归位 — 3-循环</div>
-                    <div style={{ marginBottom: '0.3rem', color: 'var(--muted)' }}>⬜ 步骤六：顶层角归位 — 3-循环</div>
-                    <div style={{ color: 'var(--muted)' }}>⬜ 步骤七：翻黄角 — 幂迭代</div>
+                </div>
+              )}
+
+              {/* 第6节专属：CTA 引导按钮 */}
+              {id === 'solve' && (
+                <div style={{
+                  marginBottom: '1rem', padding: '1rem 1.2rem',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #FEF3C7 0%, #FEE2E2 100%)',
+                  border: '2px solid #F59E0B',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '1.2rem' }}>🎯</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>准备好了吗？开始引导复原</span>
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--ink2)', marginBottom: '0.8rem', lineHeight: 1.5 }}>
+                    白色十字已就位，你将亲手用逆序撤销复原角块、用共轭变换复原棱块。<br/>
+                    完整路线：底面十字 → 角块 → 中层棱块 → 顶面（后续扩展）
+                  </p>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--ink2)', marginBottom: '0.8rem', lineHeight: 1.6 }}>
+                    <div style={{ marginBottom: '0.15rem' }}>✅ 白色十字（直觉操作）</div>
+                    <div style={{ marginBottom: '0.15rem' }}>✅ 白色角块 — 逆序列法则（R' D' R D）</div>
+                    <div style={{ marginBottom: '0.15rem', fontWeight: 600 }}>▶ 中层棱块 — 共轭变换（U R U' R' U' F' U F）</div>
+                    <div style={{ color: 'var(--muted)' }}>⬜ 顶面十字 / 棱归位 / 角归位 / 翻黄角</div>
                   </div>
                   <button
                     className="btn btn-primary"
-                    style={{ fontSize: '0.9rem', width: '100%' }}
+                    style={{ fontSize: '0.9rem', width: '100%', padding: '0.7rem', fontWeight: 700 }}
                     onClick={() => navigate('/tutorial')}
                   >
-                    🎯 开始引导：复原第一个角块
+                    🚀 开始交互式复原引导
                   </button>
                 </div>
               )}
+
 
               {/* 比喻说明 */}
               <div className="analogy-note">
@@ -841,35 +1037,72 @@ export default function Chapter() {
               ) : (
                 /* ---- 非第3章：单个3D魔方 ---- */
                 <>
-                {/* 记法说明条（第1/2/4/6章——需要操作魔方的章节） */}
-                {['intro', 'matrix', 'inverse', 'invariant', 'solve'].includes(id!) && (
+                {/* 第6节专属：魔方+演示并排 */}
+                {id === 'solve' ? (
+                  <>
+                    {/* 记法说明条 */}
+                    <div style={{
+                      fontSize: '0.73rem', color: 'var(--ink2)',
+                      marginBottom: '0.5rem',
+                      display: 'flex', gap: '0.8rem', justifyContent: 'center',
+                      background: 'var(--bg2)', borderRadius: '6px',
+                      padding: '0.3rem 0.6rem',
+                    }}>
+                      <span>🟥 <strong>R</strong>=右面</span>
+                      <span>🟩 <strong>U</strong>=上面</span>
+                      <span>🟦 <strong>F</strong>=前面</span>
+                      <span style={{color:'var(--muted)'}}>|</span>
+                      <span>带 <strong>'</strong> = 逆时针</span>
+                    </div>
+                    {/* 3D魔方 */}
+                    <div style={{
+                      height: '320px', marginBottom: '0.8rem',
+                      borderRadius: 'var(--radius)',
+                      overflow: 'hidden', border: '1px solid var(--rule)',
+                    }}>
+                      <Cube3DView key={id} ref={cubeRef} />
+                    </div>
+                    {/* Tab 演示面板 */}
+                    <SolveDemoPanel cubeRef={cubeRef} />
+                  </>
+                ) : (
+                  <>
+                  {/* 记法说明条 */}
+                  {['intro', 'matrix', 'inverse', 'invariant'].includes(id!) && (
+                    <div style={{
+                      fontSize: '0.73rem', color: 'var(--ink2)',
+                      marginBottom: '0.5rem',
+                      display: 'flex', gap: '0.8rem', justifyContent: 'center',
+                      background: 'var(--bg2)', borderRadius: '6px',
+                      padding: '0.3rem 0.6rem',
+                    }}>
+                      <span>🟥 <strong>R</strong>=右面</span>
+                      <span>🟩 <strong>U</strong>=上面</span>
+                      <span>🟦 <strong>F</strong>=前面</span>
+                      <span style={{color:'var(--muted)'}}>|</span>
+                      <span>带 <strong>\'</strong> = 逆时针</span>
+                    </div>
+                  )}
                   <div style={{
-                    fontSize: '0.73rem', color: 'var(--ink2)',
-                    marginBottom: '0.5rem',
-                    display: 'flex', gap: '0.8rem', justifyContent: 'center',
-                    background: 'var(--bg2)', borderRadius: '6px',
-                    padding: '0.3rem 0.6rem',
+                    height: '420px', marginBottom: '0.6rem',
+                    borderRadius: 'var(--radius)',
+                    overflow: 'hidden',
+                    border: '1px solid var(--rule)',
                   }}>
-                    <span>🟥 <strong>R</strong>=右面</span>
-                    <span>🟩 <strong>U</strong>=上面</span>
-                    <span>🟦 <strong>F</strong>=前面</span>
-                    <span style={{color:'var(--muted)'}}>|</span>
-                    <span>带 <strong>'</strong> = 逆时针</span>
+                    <Cube3DView key={id} ref={cubeRef} />
                   </div>
+                  </>
                 )}
-                <div style={{
-                  height: '420px', marginBottom: '0.6rem',
-                  borderRadius: 'var(--radius)',
-                  overflow: 'hidden',
-                  border: '1px solid var(--rule)',
-                }}>
-                  <Cube3DView key={id} ref={cubeRef} />
-                </div>
                 </>
               )}
 
               {/* ---- 第3章专属：验证区（矩阵已搬至左侧，此处只留联动魔方的验证区） ---- */}
               {id === 'compose' && <ComposeVerify leftCubeRef={leftCubeRef} rightCubeRef={rightCubeRef} />}
+              {id === 'compose' && (
+                <div style={{ marginTop: '0.8rem', padding: '0.6rem 0.8rem', borderRadius: '6px', background: '#EFF6FF', borderLeft: '3px solid #3B82F6', fontSize: '0.8rem', color: 'var(--ink2)' }}>
+                  <strong>因果说明：</strong>R 和 U 操作的顺序之所以影响结果，是因为旋转矩阵乘法不满足交换律。这在数学上等价于：两个旋转的合成结果取决于执行顺序——先绕 X 轴再绕 Y 轴，与先绕 Y 轴再绕 X 轴，得到不同的最终朝向。
+                </div>
+              )}
 
               {/* ---- 第4章专属：撤销演示（逆矩阵卡片已搬至左侧） ---- */}
               {id === 'inverse' && <InverseDemo cubeRef={cubeRef} />}
@@ -890,6 +1123,14 @@ export default function Chapter() {
               </div>
             </div>
           </div>
+
+          {/* 小结条 */}
+          {CHAPTER_SUMMARY[id!] && (
+            <div style={{ display:'flex', alignItems:'center', gap:'0.6rem', padding:'0.6rem 1rem', marginBottom:'1rem', background:'var(--bg2)', borderRadius:'8px', borderLeft: `4px solid ${CHAPTER_COLORS[id!]}` }}>
+              <span style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--muted)' }}>本节要点</span>
+              {CHAPTER_SUMMARY[id!].map((point, i) => <span key={i} style={{ fontSize:'0.78rem', color:'var(--ink2)', padding:'0.15rem 0.5rem', borderRadius:'4px', background:'#fff' }}>{point}</span>)}
+            </div>
+          )}
 
           {/* 章节导航 */}
           <div className="chapter-nav">

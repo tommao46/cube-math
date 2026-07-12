@@ -11,9 +11,9 @@ type PlayMode = 'teach' | 'practice' | 'challenge'
 
 /** 模式配置 */
 const MODE_CONFIG: Record<PlayMode, { label: string; desc: string }> = {
-  teach:     { label: '教学模式', desc: '可查看操作历史，参考撤销操作理解变换过程' },
-  practice:  { label: '练习模式', desc: '仅显示操作历史，无额外辅助' },
-  challenge: { label: '挑战模式', desc: '隐藏一切提示，纯靠思维推导复原' },
+  teach:     { label: '教学模式', desc: '每步操作实时显示对应旋转矩阵，帮助理解"转动=矩阵变换"' },
+  practice:  { label: '练习模式', desc: '记录操作历史并提供提示，适合独立尝试复原' },
+  challenge: { label: '挑战模式', desc: '隐藏一切提示和历史，纯靠记忆和推理复原' },
 }
 
 /** 实操训练页面 — 3D魔方 + 操作面板 */
@@ -39,6 +39,10 @@ export default function Playground() {
   const [wasScrambled, setWasScrambled] = useState(false)
   /** 上一次操作步数（用于检测"刚刚又操作了一步"） */
   const lastHistoryLen = useRef(0)
+  /** 新手引导提示是否显示（首次进入时显示） */
+  const [showGuide, setShowGuide] = useState(true)
+  /** 练习模式提示文本 */
+  const [hint, setHint] = useState<string | null>(null)
 
   /* ---- 计时器逻辑 ---- */
   const hasStarted = useRef(false)  // 是否已经开始过（用于区分首次开始和继续计时）
@@ -106,6 +110,20 @@ export default function Playground() {
 
     // store 移除最后一条记录
     store.undo()
+  }
+
+  /** 练习模式提示：基于打乱历史反推下一步建议 */
+  const handleHint = () => {
+    const store = useCubeStore.getState()
+    if (store.history.length === 0) {
+      setHint('魔方已是还原状态，试试先点击"打乱"按钮。')
+      return
+    }
+    // 提示最后一步的逆操作（最简单的还原思路：后做的先撤销）
+    const lastMove = store.history[store.history.length - 1]
+    const reverseMove = { ...lastMove, direction: (lastMove.direction * -1) as 1 | -1 }
+    const reverseNotation = moveToNotation(reverseMove)
+    setHint(`提示：试试执行 ${reverseNotation}（撤销最后一步操作）。核心思路——后做的先撤销。`)
   }
 
   /** 格式化时间 */
@@ -195,6 +213,35 @@ export default function Playground() {
             {MODE_CONFIG[mode].desc}
           </p>
 
+          {/* 新手引导横幅（首次进入显示，可关闭） */}
+          {showGuide && (
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: '0.6rem',
+              padding: '0.7rem 1rem', marginBottom: '1rem',
+              background: 'linear-gradient(135deg, #EFF6FF, #DBEAFE)',
+              borderRadius: '8px', border: '1px solid #BFDBFE',
+            }}>
+              <span style={{ fontSize: '1.1rem' }}>👋</span>
+              <div style={{ flex: 1, fontSize: '0.8rem', color: 'var(--ink2)' }}>
+                <strong>欢迎来到实操厅！</strong>
+                <div style={{ marginTop: '0.3rem' }}>
+                  ① 点击「打乱」按钮随机打乱魔方 →
+                  ② 用<strong>左键</strong>点击魔方面 = 逆时针，<strong>右键</strong> = 顺时针 →
+                  ③ 目标：让每面恢复同色。可随时「撤销」或「重置」。
+                </div>
+              </div>
+              <button
+                onClick={() => setShowGuide(false)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: '1rem', color: 'var(--muted)', padding: '0',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* 双栏布局 */}
           <div className="two-col">
             {/* 左侧：3D 魔方 */}
@@ -241,7 +288,29 @@ export default function Playground() {
                 >
                   {timerRunning ? formatTime(timer) : '计时'} {timerRunning ? '||' : ''}
                 </button>
+                {/* 练习模式专属：提示按钮 */}
+                {mode === 'practice' && (
+                  <button
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.82rem', padding: '0.45rem 0.9rem' }}
+                    onClick={handleHint}
+                  >
+                    💡 提示
+                  </button>
+                )}
               </div>
+
+              {/* 练习模式提示文本 */}
+              {hint && (
+                <div style={{
+                  padding: '0.5rem 0.8rem', marginBottom: '0.8rem',
+                  background: '#FEF3C7', borderRadius: '6px',
+                  fontSize: '0.8rem', color: 'var(--ink2)',
+                  borderLeft: '3px solid #F59E0B',
+                }}>
+                  {hint}
+                </div>
+              )}
 
               {/* 操作历史（挑战模式下隐藏） */}
               {mode !== 'challenge' && (
@@ -266,10 +335,57 @@ export default function Playground() {
               </div>
               )}
 
-              {/* 模式特有提示 */}
+              {/* 教学模式：显示最近操作的旋转矩阵 */}
+              {mode === 'teach' && moveHistory.length > 0 && (
+                <div className="card" style={{ marginBottom: '1rem', borderLeft: '4px solid #8B5CF6' }}>
+                  <h3 style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                    矩阵解读
+                  </h3>
+                  {(() => {
+                    const last = moveHistory[moveHistory.length - 1]
+                    const matrixMap: Record<string, number[][]> = {
+                      R: [[1,0,0],[0,0,-1],[0,1,0]], L: [[1,0,0],[0,0,1],[0,-1,0]],
+                      U: [[0,0,-1],[0,1,0],[1,0,0]], D: [[0,0,1],[0,1,0],[-1,0,0]],
+                      F: [[0,1,0],[1,0,0],[0,0,1]], B: [[0,-1,0],[-1,0,0],[0,0,1]],
+                    }
+                    const mat = matrixMap[last.notation.replace("'", '')] || [[1,0,0],[0,1,0],[0,0,1]]
+                    const isInverse = last.notation.includes("'")
+                    return (
+                      <div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--ink2)', marginBottom: '0.5rem' }}>
+                          最后一步 <strong style={{ fontFamily: 'monospace' }}>{last.notation}</strong>
+                          {isInverse ? '（逆时针）= 矩阵的逆' : '（顺时针）'}
+                        </p>
+                        <div style={{
+                          fontFamily: 'monospace', fontSize: '0.75rem',
+                          background: '#F5F3FF', padding: '0.5rem 0.8rem',
+                          borderRadius: '6px', marginBottom: '0.5rem',
+                        }}>
+                          <div>[{mat[0].map(v => (isInverse ? v === -1 ? ' 1' : v === 1 ? '-1' : ' 0' : (v < 0 ? ' ' : '  ') + v).padStart(3)).join(',')}]</div>
+                          <div>[{mat[1].map(v => (isInverse ? v === -1 ? ' 1' : v === 1 ? '-1' : ' 0' : (v < 0 ? ' ' : '  ') + v).padStart(3)).join(',')}]</div>
+                          <div>[{mat[2].map(v => (isInverse ? v === -1 ? ' 1' : v === 1 ? '-1' : ' 0' : (v < 0 ? ' ' : '  ') + v).padStart(3)).join(',')}]</div>
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                          {isInverse
+                            ? '逆时针 = 顺时针矩阵的转置（正交矩阵性质：R⁻¹ = Rᵀ）'
+                            : '这个矩阵将右层方块绕 X 轴旋转 90°'}
+                        </p>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+
+              {/* 教学模式提示 */}
               {mode === 'teach' && (
                 <div className="analogy-note">
-                  <span>提示：你可以通过"撤销"查看上一步的效果，观察变换的可逆性</span>
+                  <span>教学模式：每步操作都会显示对应的旋转矩阵。配合第2节的内容理解"转动=矩阵变换"。</span>
+                </div>
+              )}
+              {/* 练习模式提示 */}
+              {mode === 'practice' && (
+                <div className="analogy-note">
+                  <span>练习模式：记录你的操作并提供💡提示。尝试独立复原，卡住时再求助。</span>
                 </div>
               )}
               {mode === 'challenge' && (
