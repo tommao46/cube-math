@@ -455,19 +455,18 @@ export default function Playground() {
             &nbsp;|&nbsp;
             滚轮 = 缩放
             <div style={{ marginTop: '0.5rem', borderTop: '1px dashed var(--rule)', paddingTop: '0.5rem' }}>
-              <strong>键盘快捷键</strong>
-              <span style={{ opacity: 0.6, marginLeft: '0.3rem' }}>(RLUDFB = 国际标准记法，取英文首字母 Right/Left/Up/Down/Front/Back)</span>：<br />
-              方向键 ↑↓←→ / 字母键 RLUDFB = 顺时针
-              &nbsp;|&nbsp;
-              Shift + 上述按键 = 逆时针
-              &nbsp;|&nbsp;
-              W/S = 前/后面
-              &nbsp;|&nbsp;
-              Ctrl+Z = 撤销
-              &nbsp;|&nbsp;
-              Space = 打乱
-              &nbsp;|&nbsp;
-              Esc = 重置
+              <strong>键盘 — RLUDFB 国际标准记法</strong>
+              <span style={{ opacity: 0.5, marginLeft: '0.4rem', fontSize: '0.78rem' }}>
+                (R=Right L=Left U=Up D=Down F=Front B=Back)
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 1.5rem', marginTop: '0.4rem' }}>
+                <div>方向键 ↑↓←→ / RLUDFB</div><div>顺时针旋转</div>
+                <div>Shift + 上述按键</div><div>逆时针旋转</div>
+                <div>W / S</div><div>前面(F) / 后面(B)</div>
+                <div>Ctrl + Z</div><div>撤销</div>
+                <div>Space</div><div>打乱</div>
+                <div>Esc</div><div>重置</div>
+              </div>
             </div>
           </div>
 
